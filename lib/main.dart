@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mr_blue_sky/iqair/api.dart';
 
 void main() {
   runApp(const MyApp());
@@ -58,6 +59,8 @@ class _MyHomePageState extends State<MyHomePage> {
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
       _counter++;
+      var api = IQAir();
+      api.test();
     });
   }
 
