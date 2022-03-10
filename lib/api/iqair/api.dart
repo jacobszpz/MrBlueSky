@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:http/http.dart' as http;
-import 'package:mr_blue_sky/iqair/exceptions.dart';
-import 'package:mr_blue_sky/iqair/city_weather.dart';
+import 'package:mr_blue_sky/api/iqair/exceptions.dart';
+import 'package:mr_blue_sky/api/iqair/city_weather.dart';
 
 import 'city.dart';
 import 'state.dart';
