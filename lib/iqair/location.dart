@@ -10,6 +10,12 @@ class Location {
   double get long {
     return _long;
   }
-  Location(this._type, this._lat, this._long);
-  Location.n();
+  Location(Map<String, dynamic> location) {
+    var coords = location['coordinates'];
+    _type = location['type'];
+    _lat = coords[0];
+    _long = coords[1];
+  }
+
+  Location.empty();
 }

@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="ch.jsan.mr_blue_sky">
    <application
-        android:label="mr_blue_sky"
+        android:label="Mr Blue Sky"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

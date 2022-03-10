@@ -1,5 +1,10 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:mr_blue_sky/db/countries.dart';
 import 'package:mr_blue_sky/iqair/api.dart';
+import 'package:mr_blue_sky/iqair/city_weather.dart';
+import 'package:sqflite/sqflite.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,6 +16,7 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    // Perform App setup
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
@@ -50,6 +56,20 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  final IQAir _airAPI = IQAir();
+  List<String> _countries = [];
+
+  Future<void> _fetchCountries() async {
+    var countriesDb = CountriesProvider();
+    await countriesDb.open();
+
+    _countries = await countriesDb.getAll();
+
+    if (_countries.isEmpty) {
+      _countries = await _airAPI.getCountries();
+      countriesDb.insertCountries(_countries);
+    }
+  }
 
   void _incrementCounter() {
     setState(() {
@@ -59,8 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
       _counter++;
-      var api = IQAir();
-      api.test();
+      _fetchCountries().then((value) => null);
     });
   }
 

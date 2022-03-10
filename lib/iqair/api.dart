@@ -2,7 +2,10 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:mr_blue_sky/iqair/exceptions.dart';
-import 'package:mr_blue_sky/iqair/weather.dart';
+import 'package:mr_blue_sky/iqair/city_weather.dart';
+
+import 'city.dart';
+import 'state.dart';
 
 /// Get data from the IQAir API
 ///
@@ -59,43 +62,43 @@ class IQAir {
   }
 
   /// Returns the states which form part of a certain country
-  Future<List<String>> getStates(String country) async {
+  Future<List<State>> getStates(String country) async {
     var jsonData = await _getAPIData("states",
         {'country': country}
     );
-    return _extractItems(jsonData, "state");
+    var stateNames = _extractItems(jsonData, "state");
+    List<State> states = [];
+
+    for (String state in stateNames) {
+      states.add(State(country, state));
+    }
+    return states;
   }
 
   /// Returns the cities forming part of the specified state and country
-  Future<List<String>> getCities(String country, String state) async {
+  Future<List<City>> getCities(String country, String state) async {
     var jsonData = await _getAPIData("cities",
         {'country': country, 'state': state}
     );
-    return _extractItems(jsonData, "city");
+    var cityNames = _extractItems(jsonData, "city");
+    List<City> cities = [];
+    for (String city in cityNames) {
+      cities.add(City(country, state, city));
+    }
+    return cities;
   }
 
   /// Return the weather in a certain city
-  Future<String> getWeather(String country, String state, String city) async {
+  Future<CityWeather> getWeather(String country, String state, String city) async {
     var jsonData = await _getAPIData("city",
         {'country': country, 'state': state, 'city': city}
     );
-
-    return jsonData.toString();
+    return CityWeather(jsonData);
   }
 
   /// Return the weather in a certain city
   Future<CityWeather> getNearestCityWeather() async {
     var jsonData = await _getAPIData("nearest_city");
     return CityWeather(jsonData);
-  }
-
-  void test() {
-    getWeather("United Kingdom", "England", "Preston").then((String value) {
-      log(value);
-    });
-
-    getNearestCityWeather().then((CityWeather value) {
-      log(value.toString());
-    });
   }
 }
