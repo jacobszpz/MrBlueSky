@@ -54,10 +54,50 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+class _NoteContainer extends StatefulWidget {
+  const _NoteContainer({Key? key, required this.title}) : super(key: key);
+  final String title;
+
+  @override
+  State<_NoteContainer> createState() => _NoteContainerState();
+}
+
+class _NoteContainerState extends State<_NoteContainer> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 50,
+      color: Colors.amber[100],
+      child: Center(child: Text(widget.title)),
+    );
+  }
+}
+
+
+class _CityContainer extends StatefulWidget {
+  const _CityContainer({Key? key, required this.title}) : super(key: key);
+  final String title;
+
+  @override
+  State<_CityContainer> createState() => _CityContainerState();
+}
+
+class _CityContainerState extends State<_CityContainer> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 50,
+      color: Colors.amber[100],
+      child: Center(child: Text(widget.title)),
+    );
+  }
+}
+
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   final IQAir _airAPI = IQAir();
   List<String> _countries = [];
+  List<String> _notes = [];
 
   Future<void> _fetchCountries() async {
     var countriesDb = CountriesProvider();
@@ -91,47 +131,86 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        drawer: Drawer(
+          // Add a ListView to the drawer. This ensures the user can scroll
+          // through the options in the drawer if there isn't enough vertical
+          // space to fit everything.
+          child: ListView(
+            // Important: Remove any padding from the ListView.
+            padding: EdgeInsets.zero,
+            children: [
+              const DrawerHeader(
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                ),
+                child: Text('Mr Blue Sky'),
+              ),
+              ListTile(
+                title: const Text('Settings'),
+                onTap: () {
+                  // Update the state of the app
+                  // ...
+                  // Then close the drawer
+                  Navigator.pop(context);
+                },
+              )
+            ],
+          ),
+        ),
+        appBar: AppBar(
+          title: Text(widget.title),
+          bottom: const TabBar(
+                tabs: [
+                  Tab(text: "WEATHER"),
+                  Tab(text: "CITIES"),
+                  Tab(text: "NOTES"),
+                ],
+          ),
+          actions: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.search),
+              tooltip: 'Show Snackbar',
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('This is a snackbar')));
+              },
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
+          ]
+        ),
+        body: TabBarView(
+          children: [
+            Icon(Icons.directions_car),
+            Icon(Icons.directions_transit),
+            ListView(
+              padding: const EdgeInsets.all(0),
+              children: <Widget>[
+                _NoteContainer(title:"Preston, England"),
+                _NoteContainer(title:"Manchester, England"),
+                _NoteContainer(title:"London, England")
+              ],
+            )
+           /* _notes.isNotEmpty
+                ? ListView.builder(
+                padding: const EdgeInsets.all(8),
+                itemCount: _notes.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return Container(
+                    height: 50,
+                    child: Center(child: Text('Entry')),
+                  );
+                }
+                ) : const Center(child: Text("Try adding a note :)")),*/
           ],
         ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _incrementCounter,
+          tooltip: 'Increment',
+          child: const Icon(Icons.add),
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
