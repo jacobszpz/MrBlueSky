@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class MyAppDrawer extends StatefulWidget {
   const MyAppDrawer({Key? key, required this.title}) : super(key: key);
   final String title;
@@ -16,14 +15,19 @@ class _MyAppDrawerState extends State<MyAppDrawer> {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(
+          DrawerHeader(
+            padding: EdgeInsets.zero,
+            decoration: const BoxDecoration(
               color: Colors.blue,
             ),
-            child: Text('Mr Blue Sky'),
+            child: Image.asset('images/earth.jpg', fit: BoxFit.cover),
           ),
           ListTile(
-            title: const Text('Settings'),
+            title: Text(
+              'Settings',
+              style: TextStyle(
+                  fontSize: Theme.of(context).textTheme.subtitle1?.fontSize),
+            ),
             onTap: () {
               // Update the state of the app
               // ...
