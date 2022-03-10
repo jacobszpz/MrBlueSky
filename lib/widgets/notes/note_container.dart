@@ -12,8 +12,8 @@ class _NoteContainerState extends State<NoteContainer> {
   @override
   Widget build(BuildContext context) {
     return Dismissible(
-        key: ValueKey("a"),
-        background: Container(
+      key: ValueKey("a"),
+      background: Container(
           padding: const EdgeInsets.all(20),
           color: Colors.black,
           child: Row(
@@ -21,10 +21,9 @@ class _NoteContainerState extends State<NoteContainer> {
               Icon(Icons.delete, color: Colors.white),
               Spacer(),
               Icon(Icons.delete, color: Colors.white)
-           ],
-          )
-        ),
-        child: Container(
+            ],
+          )),
+      child: Container(
         padding: const EdgeInsets.all(20),
         height: 80,
         child: Row(
@@ -32,8 +31,7 @@ class _NoteContainerState extends State<NoteContainer> {
             Icon(Icons.wb_cloudy),
             Spacer(),
             Flexible(
-              child:
-              Column(
+              child: Column(
                 children: const <Widget>[
                   Text("This is an observation"),
                   Spacer(),
@@ -45,8 +43,7 @@ class _NoteContainerState extends State<NoteContainer> {
         ),
       ),
       onDismissed: (DismissDirection direction) {
-        setState(() {
-        });
+        setState(() {});
       },
     );
   }
