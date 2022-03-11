@@ -14,21 +14,18 @@ class _CityContainerState extends State<CityContainer> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(8),
       height: 80,
-      child: Row(
-        children: <Widget>[
-          Text(widget.title),
-          const Spacer(),
-          IconButton(
-              icon: Icon(_favourite ? Icons.favorite : Icons.favorite_outline),
-              onPressed: () {
-                setState(() {
-                  _favourite = !_favourite;
-                });
-              }
-          ),
-        ],
+      child: ListTile(
+        onTap: () {},
+        title: Text(widget.title),
+        trailing: IconButton(
+            icon: Icon(_favourite ? Icons.favorite : Icons.favorite_outline),
+            onPressed: () {
+              setState(() {
+                _favourite = !_favourite;
+              });
+            }),
       ),
     );
   }

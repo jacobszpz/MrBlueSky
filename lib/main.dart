@@ -3,10 +3,11 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:mr_blue_sky/api/iqair/api.dart';
 import 'package:mr_blue_sky/db/countries.dart';
-import 'package:mr_blue_sky/widgets/cities/city_container.dart';
+import 'package:mr_blue_sky/widgets/cities/city_tab.dart';
 import 'package:mr_blue_sky/widgets/drawer.dart';
 import 'package:mr_blue_sky/widgets/notes/create_note.dart';
-import 'package:mr_blue_sky/widgets/notes/note_container.dart';
+import 'package:mr_blue_sky/widgets/notes/note_tab.dart';
+import 'package:mr_blue_sky/widgets/weather/weather_tab.dart';
 
 void main() {
   runApp(const MyApp());
@@ -31,7 +32,7 @@ class MyApp extends StatelessWidget {
           headline6: TextStyle(fontSize: 36.0),
           bodyText2: TextStyle(fontSize: 14.0),*/
               )),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Mr. Blue Sky'),
     );
   }
 }
@@ -114,35 +115,10 @@ class _MyHomePageState extends State<MyHomePage>
           ]),
       body: TabBarView(
         controller: _tabController,
-        children: [
-          Icon(Icons.directions_car),
-          ListView(
-            padding: const EdgeInsets.all(0),
-            children: <Widget>[
-              CityContainer(title: "Preston, England"),
-              CityContainer(title: "Manchester, England"),
-              CityContainer(title: "London, England")
-            ],
-          ),
-          ListView(
-            padding: const EdgeInsets.all(0),
-            children: <Widget>[
-              NoteContainer(title: "Preston, England"),
-              NoteContainer(title: "Manchester, England"),
-              NoteContainer(title: "London, England")
-            ],
-          )
-          /* _notes.isNotEmpty
-              ? ListView.builder(
-              padding: const EdgeInsets.all(8),
-              itemCount: _notes.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Container(
-                  height: 50,
-                  child: Center(child: Text('Entry')),
-                );
-              }
-              ) : const Center(child: Text("Try adding a note :)")),*/
+        children: const <Widget>[
+          WeatherTab(),
+          CityTab(),
+          NoteTab(),
         ],
       ),
       floatingActionButton: FloatingActionButton(

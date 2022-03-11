@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mr_blue_sky/widgets/settings.dart';
 
 class MyAppDrawer extends StatefulWidget {
   const MyAppDrawer({Key? key, required this.title}) : super(key: key);
@@ -29,10 +30,8 @@ class _MyAppDrawerState extends State<MyAppDrawer> {
                   fontSize: Theme.of(context).textTheme.subtitle1?.fontSize),
             ),
             onTap: () {
-              // Update the state of the app
-              // ...
-              // Then close the drawer
               Navigator.pop(context);
+              Navigator.of(context).push(createSettingsRoute());
             },
           )
         ],
