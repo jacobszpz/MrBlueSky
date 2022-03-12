@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:mr_blue_sky/models/note.dart';
 
 class NoteContainer extends StatefulWidget {
-  const NoteContainer({Key? key, required this.note}) : super(key: key);
+  const NoteContainer(
+      {Key? key, required this.note, this.onTap, this.onDismissed})
+      : super(key: key);
   final Note note;
+  final Function()? onTap;
+  final Function()? onDismissed;
 
   @override
   State<NoteContainer> createState() => _NoteContainerState();
@@ -16,7 +20,7 @@ class _NoteContainerState extends State<NoteContainer> {
   Widget build(BuildContext context) {
     _note = widget.note;
     return Dismissible(
-      key: ValueKey("a"),
+      key: UniqueKey(),
       background: Container(
           padding: const EdgeInsets.all(20),
           color: Colors.black,
@@ -28,16 +32,20 @@ class _NoteContainerState extends State<NoteContainer> {
             ],
           )),
       child: ListTile(
-        onTap: () {},
+        onTap: () {
+          widget.onTap!();
+        },
         title: Text(_note.title),
         subtitle: Text(
-          "2022-02-02",
+          _note.timestampMessage,
           textAlign: TextAlign.right,
         ),
         leading: Icon(_note.icon),
       ),
       onDismissed: (DismissDirection direction) {
-        setState(() {});
+        setState(() {
+          widget.onDismissed!();
+        });
       },
     );
   }

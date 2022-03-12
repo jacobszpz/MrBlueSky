@@ -1,13 +1,13 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:mr_blue_sky/api/iqair/api.dart';
 import 'package:mr_blue_sky/db/countries.dart';
+import 'package:mr_blue_sky/models/note.dart';
 import 'package:mr_blue_sky/widgets/cities/city_tab.dart';
 import 'package:mr_blue_sky/widgets/drawer.dart';
 import 'package:mr_blue_sky/widgets/notes/create_note.dart';
 import 'package:mr_blue_sky/widgets/notes/note_tab.dart';
 import 'package:mr_blue_sky/widgets/weather/weather_tab.dart';
+import 'package:share_plus/share_plus.dart';
 
 void main() {
   runApp(const MyApp());
@@ -47,10 +47,10 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
-  int _counter = 0;
   final IQAir _airAPI = IQAir();
   List<String> _countries = [];
-  List<String> _notes = [];
+  final List<Note> _notes = [];
+  bool _shareIcon = true;
 
   static const List<Tab> _homeTabs = <Tab>[
     Tab(text: "WEATHER"),
@@ -64,6 +64,11 @@ class _MyHomePageState extends State<MyHomePage>
   void initState() {
     super.initState();
     _tabController = TabController(vsync: this, length: _homeTabs.length);
+    _tabController.addListener(() {
+      setState(() {
+        _shareIcon = (_tabController.index == 0);
+      });
+    });
   }
 
   @override
@@ -84,13 +89,40 @@ class _MyHomePageState extends State<MyHomePage>
     }
   }
 
-  void _handleFABPress() {
+  _writeNewNote() async {
+    Note newNote =
+        await Navigator.of(context).push(createNoteWriterRoute(Note.empty()));
     setState(() {
-      if (_tabController.index == 2) {
-        log("pushing");
-        Navigator.of(context).push(createNoteWriterRoute());
+      if (newNote.isNotEmpty) {
+        _notes.add(newNote);
       }
     });
+    return newNote;
+  }
+
+  _editNote(int index) async {
+    var newNote = await Navigator.of(context)
+        .push(createNoteWriterRoute(_notes.elementAt(index)));
+    setState(() {
+      _notes[index] = newNote;
+    });
+    return newNote;
+  }
+
+  _handleFABPress() {
+    switch (_tabController.index) {
+      case 0:
+        Share.share(
+            'The weather in Preston, UK is 10 celsius. https://google.com');
+        break;
+      case 1:
+        break;
+      case 2:
+        _writeNewNote();
+        break;
+      default:
+        break;
+    }
   }
 
   @override
@@ -115,17 +147,33 @@ class _MyHomePageState extends State<MyHomePage>
           ]),
       body: TabBarView(
         controller: _tabController,
-        children: const <Widget>[
+        children: <Widget>[
           WeatherTab(),
           CityTab(),
-          NoteTab(),
+          NoteTab(
+            notes: _notes,
+            onTap: (int index) {
+              _editNote(index);
+            },
+            onDismissed: ((int index) {
+              if (index < _notes.length) {
+                _notes.removeAt(index);
+              }
+            }),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _handleFABPress,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+          onPressed: _handleFABPress,
+          tooltip: 'Add item',
+          child: AnimatedCrossFade(
+            duration: const Duration(milliseconds: 150),
+            firstChild: const Icon(Icons.share),
+            secondChild: const Icon(Icons.add),
+            crossFadeState: _shareIcon
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+          )),
     );
   }
 }
