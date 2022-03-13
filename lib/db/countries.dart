@@ -1,4 +1,5 @@
 import 'package:sqflite/sqflite.dart';
+
 import 'index.dart';
 
 class CountriesProvider {
@@ -9,12 +10,12 @@ class CountriesProvider {
   Future open() async {
     db = await openDatabase('${Databases.countriesDb}.db', version: 1,
         onCreate: (Database db, int version) async {
-          await db.execute('''
+      await db.execute('''
   create table ${Databases.countriesDb} ( 
     $columnId integer primary key autoincrement, 
     $columnCountry text not null)
   ''');
-        });
+    });
   }
 
   Future<void> insertCountries(List<String> countries) async {
@@ -27,12 +28,12 @@ class CountriesProvider {
   }
 
   Future<List<String>> getAll() async {
-    List<Map> queryMaps = await db!.query(Databases.countriesDb,
-        columns: [columnId, columnCountry]);
+    List<Map> queryMaps = await db!
+        .query(Databases.countriesDb, columns: [columnId, columnCountry]);
 
     List<String> countries = [];
     for (var map in queryMaps) {
-       countries.add(map['columnName']);
+      countries.add(map[columnCountry]);
     }
 
     return countries;

@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:settings_ui/settings_ui.dart';
 
@@ -12,6 +13,8 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   var settings = Settings();
+  final prefsDatabase = FirebaseDatabase.instance.ref("sharedPrefs");
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(

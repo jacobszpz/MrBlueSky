@@ -3,15 +3,23 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:positioned_tap_detector_2/positioned_tap_detector_2.dart';
 
-class MyMap extends StatefulWidget {
-  const MyMap({Key? key, this.onTap}) : super(key: key);
+class WeatherMap extends StatefulWidget {
+  const WeatherMap(
+      {Key? key, required this.centerCoords, this.zoom, this.onTap})
+      : super(key: key);
   final Function(TapPosition, LatLng)? onTap;
+  final LatLng centerCoords;
+  final double? zoom;
   @override
-  State<MyMap> createState() => _MyMapState();
+  State<WeatherMap> createState() => _WeatherMapState();
 }
 
-class _MyMapState extends State<MyMap> {
+class _WeatherMapState extends State<WeatherMap> {
   final _mapController = MapController();
+  final String openstreet =
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  final String openweather =
+      "https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=7552dcd03e2863866c209f6f1981985f";
 
   @override
   void dispose() {
@@ -23,16 +31,15 @@ class _MyMapState extends State<MyMap> {
     return FlutterMap(
       mapController: _mapController,
       options: MapOptions(
-        enableScrollWheel: true,
-        onTap: ((TapPosition pos, LatLng latlng) {
-          widget.onTap!(pos, latlng);
-        }),
-        center: LatLng(51.5, -0.09),
-        zoom: 3.0,
-      ),
+          enableScrollWheel: true,
+          onTap: ((TapPosition pos, LatLng latlng) {
+            widget.onTap!(pos, latlng);
+          }),
+          center: widget.centerCoords,
+          zoom: widget.zoom ?? 1),
       layers: [
         TileLayerOptions(
-          urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          urlTemplate: openstreet,
           subdomains: ['a', 'b', 'c'],
           attributionBuilder: (_) {
             return Text("© OpenStreetMap",
@@ -41,10 +48,8 @@ class _MyMapState extends State<MyMap> {
           },
         ),
         TileLayerOptions(
-          opacity: 0.8,
-          urlTemplate:
-              "https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=7552dcd03e2863866c209f6f1981985f",
-          subdomains: ['a', 'b', 'c'],
+          opacity: 0.6,
+          urlTemplate: openweather,
           attributionBuilder: (_) {
             return Text("© OpenWeatherMap",
                 style: TextStyle(

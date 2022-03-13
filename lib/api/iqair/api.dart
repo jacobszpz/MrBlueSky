@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'dart:developer';
+
 import 'package:http/http.dart' as http;
-import 'package:mr_blue_sky/api/iqair/exceptions.dart';
 import 'package:mr_blue_sky/api/iqair/city_weather.dart';
+import 'package:mr_blue_sky/api/iqair/exceptions.dart';
 
 import 'city.dart';
 import 'state.dart';
@@ -12,10 +12,7 @@ import 'state.dart';
 /// Available at https://iqair.com
 class IQAir {
   /// IQAir base Uri
-  final apiUri = Uri(
-      scheme: 'http',
-      host: 'api.airvisual.com',
-      path: '/v2/');
+  final apiUri = Uri(scheme: 'http', host: 'api.airvisual.com', path: '/v2/');
 
   /// Returns the API key
   String _getKey() {
@@ -29,12 +26,11 @@ class IQAir {
     requestParams.addAll(params);
 
     return apiUri.replace(
-        path: "${apiUri.path}$endpoint",
-        queryParameters: requestParams
-    );
+        path: "${apiUri.path}$endpoint", queryParameters: requestParams);
   }
 
-  Future<dynamic> _getAPIData(String endpoint, [Map<String, String>? params]) async {
+  Future<dynamic> _getAPIData(String endpoint,
+      [Map<String, String>? params]) async {
     var endpointUri = _getAPIUrl(endpoint, params);
     var response = await http.get(endpointUri);
     var jsonResponse = jsonDecode(response.body);
@@ -63,9 +59,7 @@ class IQAir {
 
   /// Returns the states which form part of a certain country
   Future<List<State>> getStates(String country) async {
-    var jsonData = await _getAPIData("states",
-        {'country': country}
-    );
+    var jsonData = await _getAPIData("states", {'country': country});
     var stateNames = _extractItems(jsonData, "state");
     List<State> states = [];
 
@@ -77,9 +71,8 @@ class IQAir {
 
   /// Returns the cities forming part of the specified state and country
   Future<List<City>> getCities(String country, String state) async {
-    var jsonData = await _getAPIData("cities",
-        {'country': country, 'state': state}
-    );
+    var jsonData =
+        await _getAPIData("cities", {'country': country, 'state': state});
     var cityNames = _extractItems(jsonData, "city");
     List<City> cities = [];
     for (String city in cityNames) {
@@ -88,12 +81,20 @@ class IQAir {
     return cities;
   }
 
+  Future<List<City>> getCitiesFromState(State state) async {
+    return getCities(state.country, state.state);
+  }
+
   /// Return the weather in a certain city
-  Future<CityWeather> getWeather(String country, String state, String city) async {
-    var jsonData = await _getAPIData("city",
-        {'country': country, 'state': state, 'city': city}
-    );
+  Future<CityWeather> getWeather(
+      String country, String state, String city) async {
+    var jsonData = await _getAPIData(
+        "city", {'country': country, 'state': state, 'city': city});
     return CityWeather(jsonData);
+  }
+
+  Future<CityWeather> getWeatherFromCity(City city) async {
+    return getWeather(city.country, city.state, city.city);
   }
 
   /// Return the weather in a certain city

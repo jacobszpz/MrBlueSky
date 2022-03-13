@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:mr_blue_sky/api/iqair/city.dart';
 
 class CityContainer extends StatefulWidget {
-  const CityContainer({Key? key, required this.title}) : super(key: key);
-  final String title;
+  const CityContainer({Key? key, required this.city, this.onTap})
+      : super(key: key);
+  final City city;
+  final Function()? onTap;
 
   @override
   State<CityContainer> createState() => _CityContainerState();
@@ -17,8 +20,10 @@ class _CityContainerState extends State<CityContainer> {
       padding: const EdgeInsets.all(8),
       height: 80,
       child: ListTile(
-        onTap: () {},
-        title: Text(widget.title),
+        onTap: () {
+          widget.onTap!();
+        },
+        title: Text('${widget.city.city}, ${widget.city.country}'),
         trailing: IconButton(
             icon: Icon(_favourite ? Icons.favorite : Icons.favorite_outline),
             onPressed: () {
