@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mr_blue_sky/api/iqair/city_weather.dart';
 import 'package:mr_blue_sky/api/iqair/exceptions.dart';
+import 'package:mr_blue_sky/api/weather_api.dart';
 
 import 'city.dart';
 import 'state.dart';
@@ -10,7 +11,7 @@ import 'state.dart';
 /// Get data from the IQAir API
 ///
 /// Available at https://iqair.com
-class IQAir {
+class IQAir implements WeatherAPI {
   /// IQAir base Uri
   final apiUri = Uri(scheme: 'http', host: 'api.airvisual.com', path: '/v2/');
 
@@ -52,6 +53,7 @@ class IQAir {
   }
 
   /// Returns a list of countries
+  @override
   Future<List<String>> getCountries() async {
     var jsonData = await _getAPIData("countries");
     return _extractItems(jsonData, "country");
@@ -70,6 +72,7 @@ class IQAir {
   }
 
   /// Returns the cities forming part of the specified state and country
+  @override
   Future<List<City>> getCities(String country, String state) async {
     var jsonData =
         await _getAPIData("cities", {'country': country, 'state': state});

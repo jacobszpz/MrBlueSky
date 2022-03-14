@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mr_blue_sky/models/note.dart';
-import 'package:mr_blue_sky/models/weather_type.dart';
 
 import 'note_container.dart';
 
@@ -28,8 +27,8 @@ class _NoteTabState extends State<NoteTab> {
             itemBuilder: (BuildContext context, int index) {
               Note note = notes.elementAt(index);
               return NoteContainer(
-                note: Note.withTimestamp(note.title, note.content,
-                    WeatherType.clearSkyDay, note.timestamp),
+                note: Note.fromExisting(note.title, note.content, note.weather,
+                    note.editTimestamp, note.creationTimestamp, note.uuid),
                 onTap: () {
                   widget.onTap!(index);
                 },

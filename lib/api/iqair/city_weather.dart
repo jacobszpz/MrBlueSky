@@ -26,4 +26,8 @@ class CityWeather {
   String toString() {
     return 'Weather in $city, $country';
   }
+
+  String get getShareMsg {
+    return "Hi, I'm in $city, $country, and it's ${weather.temperature}° celsius!.";
+  }
 }

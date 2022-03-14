@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mr_blue_sky/models/note.dart';
-import 'package:mr_blue_sky/models/weather_type.dart';
 
 class NoteWriter extends StatefulWidget {
   const NoteWriter({Key? key, required this.note}) : super(key: key);
@@ -35,8 +34,13 @@ class _NoteWriterState extends State<NoteWriter> {
         onWillPop: () async {
           Navigator.pop(
               context,
-              Note(titleController.text, contentController.text,
-                  WeatherType.clearSkyDay));
+              Note.fromExisting(
+                  titleController.text,
+                  contentController.text,
+                  widget.note.weather,
+                  DateTime.now(),
+                  widget.note.creationTimestamp,
+                  widget.note.uuid));
           return false;
         },
         child: Scaffold(

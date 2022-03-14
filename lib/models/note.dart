@@ -1,16 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mr_blue_sky/models/weather_type.dart';
+import 'package:uuid/uuid.dart';
 
 class Note {
   String title = "";
   String content = "";
   WeatherType weather = WeatherType.clearSkyDay;
-  DateTime timestamp = DateTime.now();
+  DateTime editTimestamp = DateTime.now();
+  DateTime creationTimestamp = DateTime.now();
+  String uuid = const Uuid().v1();
 
-  Note(this.title, this.content, this.weather);
-  Note.withTimestamp(this.title, this.content, this.weather, this.timestamp);
+  Note.fromNew(this.title, this.content, this.weather);
+  Note.fromExisting(this.title, this.content, this.weather, this.editTimestamp,
+      this.creationTimestamp, this.uuid);
   Note.empty();
+
+  Note.fromRTDB(String dbUUID, Map<String, dynamic> map) {
+    title = map['title'];
+    content = map['content'];
+    editTimestamp = DateTime.fromMillisecondsSinceEpoch(map['editTimestamp']);
+    creationTimestamp =
+        DateTime.fromMillisecondsSinceEpoch(map['creationTimestamp']);
+    weather = WeatherType.values.byName(map['weatherType']);
+    uuid = dbUUID;
+  }
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'title': title,
+      'content': content,
+      'editTimestamp': editTimestamp.millisecondsSinceEpoch,
+      'creationTimestamp': creationTimestamp.millisecondsSinceEpoch,
+      'weatherType': weather.name
+    };
+  }
 
   IconData get icon {
     switch (weather) {
@@ -41,13 +65,13 @@ class Note {
   String get timestampMessage {
     String dateMsg = "";
     var now = DateTime.now();
-    bool sameDay = (timestamp.day == now.day &&
-        timestamp.month == now.month &&
-        timestamp.year == now.year);
+    bool sameDay = (editTimestamp.day == now.day &&
+        editTimestamp.month == now.month &&
+        editTimestamp.year == now.year);
     if (sameDay) {
-      dateMsg = DateFormat.jm().format(timestamp);
+      dateMsg = DateFormat.jm().format(editTimestamp);
     } else {
-      dateMsg = DateFormat.yMMMMd().format(timestamp);
+      dateMsg = DateFormat.yMMMMd().format(editTimestamp);
     }
     return 'Last edited $dateMsg';
   }
