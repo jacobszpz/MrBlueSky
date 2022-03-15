@@ -11,8 +11,15 @@ class NoteWriter extends StatefulWidget {
 }
 
 class _NoteWriterState extends State<NoteWriter> {
-  final titleController = TextEditingController();
-  final contentController = TextEditingController();
+  late TextEditingController titleController;
+  late TextEditingController contentController;
+
+  @override
+  initState() {
+    super.initState();
+    titleController = TextEditingController();
+    contentController = TextEditingController();
+  }
 
   void clear(String value) {
     titleController.clear();

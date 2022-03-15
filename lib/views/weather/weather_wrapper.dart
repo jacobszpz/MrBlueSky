@@ -3,16 +3,17 @@ import 'package:mr_blue_sky/api/iqair/city_weather.dart';
 import 'package:mr_blue_sky/views/weather/weather_tab.dart';
 
 class WeatherWrapper extends StatefulWidget {
-  WeatherWrapper(
+  const WeatherWrapper(
       {Key? key,
       required this.weather,
       required this.favourite,
       required this.onShare,
-      required this.onFavTap});
+      required this.onFavTap})
+      : super(key: key);
   final bool favourite;
   final CityWeather weather;
-  Function() onShare;
-  Function(bool favourite) onFavTap;
+  final Function() onShare;
+  final Function(bool favourite) onFavTap;
 
   @override
   State<StatefulWidget> createState() => _WeatherWrapperState();

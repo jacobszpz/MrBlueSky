@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:mr_blue_sky/models/weather_type.dart';
+import 'package:mr_blue_sky/api/weather_type.dart';
 import 'package:uuid/uuid.dart';
 
 class Note {

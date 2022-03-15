@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutterfire_ui/auth.dart';
 import 'package:mr_blue_sky/api/iqair/api.dart';
 import 'package:mr_blue_sky/api/iqair/city.dart';
@@ -31,23 +32,39 @@ class MyApp extends StatelessWidget {
   final Future<FirebaseApp> _firebaseApp = Firebase.initializeApp();
   static const _googleClientId =
       '852712905855-h9efstsslgre2qvlsrnecn4duk89oatr.apps.googleusercontent.com';
-
   @override
   Widget build(BuildContext context) {
+    Color? blueSkyColor = Colors.blue[500];
+    Color? deepSkyColor = Colors.deepPurple[900];
+
     return MaterialApp(
         title: 'Flutter Demo',
+        darkTheme: ThemeData(
+                colorScheme: ColorScheme.fromSwatch(
+                    brightness: Brightness.dark,
+                    accentColor: deepSkyColor,
+                    primaryColorDark: deepSkyColor,
+                    primarySwatch: Colors.blue,
+                    cardColor: deepSkyColor))
+            .copyWith(useMaterial3: true),
         theme: ThemeData(
-            primarySwatch: Colors.blue,
-            // Global Text Style
-            textTheme: const TextTheme(
-                /* headline1: TextStyle(
+                colorScheme: ColorScheme.fromSwatch(
+                    brightness: Brightness.light,
+                    cardColor: blueSkyColor,
+                    primaryColorDark: deepSkyColor,
+                    primarySwatch: Colors.blue),
+
+                // Global Text Style
+                textTheme: const TextTheme(
+                    /* headline1: TextStyle(
             fontSize: 72.0,
             fontWeight: FontWeight.bold,
             fontFamily: 'Cutive',
           ),
           headline6: TextStyle(fontSize: 36.0),
           bodyText2: TextStyle(fontSize: 14.0),*/
-                )),
+                    ))
+            .copyWith(useMaterial3: true),
         home: FutureBuilder(
             future: _firebaseApp,
             builder: ((context, snapshot) {
@@ -83,12 +100,13 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   final IQAir _airAPI = IQAir();
-  List<City> _favouriteCities = [];
-  List<Note> _notes = [];
+  final List<City> _favouriteCities = [];
+  final List<Note> _notes = [];
   CityWeather? _cityWeather;
   bool _shareIcon = true;
   User? _loggedUser;
   late StreamSubscription connectivityStream;
+  bool isFabVisible = true;
 
   final _db = FirebaseDatabase.instanceFor(
           app: Firebase.app(),
@@ -104,6 +122,7 @@ class _MyHomePageState extends State<MyHomePage>
 
   late TabController _tabController;
   late ScrollController _cityScrollController;
+  late ScrollController _weatherScrollController;
 
   bool get isLoggedIn {
     return _loggedUser != null;
@@ -129,10 +148,24 @@ class _MyHomePageState extends State<MyHomePage>
   void initState() {
     super.initState();
     _cityScrollController = ScrollController();
+    _weatherScrollController = ScrollController();
     _tabController = TabController(vsync: this, length: _homeTabs.length);
     _tabController.addListener(() {
       setState(() {
         _shareIcon = (_tabController.index == 0);
+        isFabVisible = true;
+      });
+    });
+
+    _weatherScrollController.addListener(() {
+      ScrollDirection userScrollDirection =
+          _weatherScrollController.position.userScrollDirection;
+      setState(() {
+        if (userScrollDirection == ScrollDirection.forward) {
+          isFabVisible = true;
+        } else if (userScrollDirection == ScrollDirection.reverse) {
+          isFabVisible = false;
+        }
       });
     });
 
@@ -289,12 +322,6 @@ class _MyHomePageState extends State<MyHomePage>
     );
   }
 
-  SnackBar _dbNetworkIssue() {
-    return const SnackBar(
-      content: Text('Database could not be reached'),
-    );
-  }
-
   _showSnackBar(SnackBar snackBar) {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
@@ -309,6 +336,7 @@ class _MyHomePageState extends State<MyHomePage>
         }
         break;
       case 1:
+        _onSearchTap();
         break;
       case 2:
         _writeNewNote();
@@ -346,83 +374,93 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
+    const duration = Duration(milliseconds: 200);
     return Scaffold(
-      drawer: MyAppDrawer(
-        loggedUser: _loggedUser,
-        onSignIn: ((context, state) {
-          setState(() {
-            Navigator.pop(context);
-          });
-        }),
-        onSignOut: ((context) {
-          setState(() {
-            Navigator.pop(context);
-          });
-        }),
-      ),
-      appBar: AppBar(
-          title: Text(widget.title),
-          bottom: TabBar(
-            onTap: ((index) {
-              switch (index) {
-                case 1:
-                  if (!_tabController.indexIsChanging) {
-                    _cityScrollController.animateTo(
-                        _cityScrollController.initialScrollOffset,
-                        duration: const Duration(milliseconds: 600),
-                        curve: Curves.ease);
-                  }
-                  break;
-              }
-            }),
-            controller: _tabController,
-            tabs: _homeTabs,
-          ),
-          actions: <Widget>[
-            IconButton(
-              icon: const Icon(Icons.search),
-              tooltip: 'Search city',
-              onPressed: () {
-                _onSearchTap();
-              },
+        drawer: MyAppDrawer(
+          loggedUser: _loggedUser,
+          onSignIn: ((context, state) {
+            setState(() {
+              Navigator.pop(context);
+            });
+          }),
+          onSignOut: ((context) {
+            setState(() {
+              Navigator.pop(context);
+            });
+          }),
+        ),
+        appBar: AppBar(
+            title: Text(widget.title),
+            bottom: TabBar(
+              indicatorColor: Theme.of(context).colorScheme.secondary,
+              onTap: ((index) {
+                switch (index) {
+                  case 1:
+                    if (!_tabController.indexIsChanging) {
+                      _cityScrollController.animateTo(
+                          _cityScrollController.initialScrollOffset,
+                          duration: const Duration(milliseconds: 600),
+                          curve: Curves.ease);
+                    }
+                    break;
+                }
+              }),
+              controller: _tabController,
+              tabs: _homeTabs,
             ),
-          ]),
-      body: TabBarView(
-        controller: _tabController,
-        children: <Widget>[
-          WeatherTab(cityWeather: _cityWeather),
-          CityTab(
-            cities: _favouriteCities,
-            controller: _cityScrollController,
-            onTap: ((index) {
-              openCityWeather(_favouriteCities.elementAt(index), true);
-            }),
-            onFavTap: ((index) {
-              _removeFavouriteCityByIndex(index);
-            }),
-          ),
-          NoteTab(
-            notes: _notes,
-            onTap: (int index) {
-              _editNote(index);
-            },
-            onDismissed: ((int index) {
-              _removeNote(index);
-            }),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-          onPressed: _handleFABPress,
-          tooltip: 'Add item',
-          child: AnimatedCrossFade(
-            duration: const Duration(milliseconds: 150),
-            firstChild: const Icon(Icons.share),
-            secondChild: const Icon(Icons.add),
-            crossFadeState: _shareIcon
-                ? CrossFadeState.showFirst
-                : CrossFadeState.showSecond,
-          )),
-    );
+            actions: <Widget>[
+              IconButton(
+                icon: const Icon(Icons.search),
+                tooltip: 'Search city',
+                onPressed: () {
+                  _onSearchTap();
+                },
+              ),
+            ]),
+        body: TabBarView(
+          controller: _tabController,
+          children: <Widget>[
+            WeatherTab(
+                cityWeather: _cityWeather,
+                scrollController: _weatherScrollController),
+            CityTab(
+              cities: _favouriteCities,
+              controller: _cityScrollController,
+              onTap: ((index) {
+                openCityWeather(_favouriteCities.elementAt(index), true);
+              }),
+              onFavTap: ((index) {
+                _removeFavouriteCityByIndex(index);
+              }),
+            ),
+            NoteTab(
+              notes: _notes,
+              onTap: (int index) {
+                _editNote(index);
+              },
+              onDismissed: ((int index) {
+                _removeNote(index);
+              }),
+            ),
+          ],
+        ),
+        floatingActionButton: AnimatedSlide(
+            duration: duration,
+            offset: isFabVisible ? Offset.zero : const Offset(0, 2),
+            child: AnimatedOpacity(
+              duration: duration,
+              opacity: isFabVisible ? 1 : 0,
+              child: FloatingActionButton(
+                  onPressed: _handleFABPress,
+                  tooltip: 'Add item',
+                  child: AnimatedCrossFade(
+                    duration: const Duration(milliseconds: 150),
+                    firstChild: const Icon(Icons.share),
+                    secondChild: const Icon(Icons.add),
+                    crossFadeState: _shareIcon
+                        ? CrossFadeState.showFirst
+                        : CrossFadeState.showSecond,
+                  )),
+            )));
   }
 }
