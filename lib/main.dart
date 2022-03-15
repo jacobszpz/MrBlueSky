@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:developer';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -13,6 +17,7 @@ import 'package:mr_blue_sky/views/notes/create_note.dart';
 import 'package:mr_blue_sky/views/notes/note_tab.dart';
 import 'package:mr_blue_sky/views/search_delegate.dart';
 import 'package:mr_blue_sky/views/weather/weather_tab.dart';
+import 'package:mr_blue_sky/views/weather/weather_wrapper.dart';
 import 'package:share_plus/share_plus.dart';
 
 void main() {
@@ -56,6 +61,7 @@ class MyApp extends StatelessWidget {
                   const PhoneProviderConfiguration(),
                   const GoogleProviderConfiguration(clientId: _googleClientId)
                 ]);
+                FirebaseDatabase.instance.setPersistenceEnabled(true);
                 return const MyHomePage(title: 'Mr. Blue Sky');
               } else {
                 // Display loading indicator
@@ -77,12 +83,13 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   final IQAir _airAPI = IQAir();
-  List<City> _localCities = [];
-  Map<String, bool> _favouriteCities = {};
+  List<City> _favouriteCities = [];
   List<Note> _notes = [];
-  CityWeather _cityWeather = CityWeather.empty();
+  CityWeather? _cityWeather;
   bool _shareIcon = true;
   User? _loggedUser;
+  late StreamSubscription connectivityStream;
+
   final _db = FirebaseDatabase.instanceFor(
           app: Firebase.app(),
           databaseURL:
@@ -106,6 +113,18 @@ class _MyHomePageState extends State<MyHomePage>
     return _loggedUser?.uid.toString() ?? "";
   }
 
+  _fetchWeather() {
+    _airAPI.getNearestCityWeather().then((cityWeather) {
+      setState(() {
+        _cityWeather = cityWeather;
+      });
+    }).catchError(
+      ((event) {
+        _showSnackBar(_networkIssue());
+      }),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -121,24 +140,30 @@ class _MyHomePageState extends State<MyHomePage>
       setState(() {
         _loggedUser = userStream;
         if (_loggedUser != null) {
-          _fetchNotes();
-          _fetchFavouriteCities();
+          _activateListeners();
         }
       });
     });
 
-    _airAPI.getNearestCityWeather().then((cityWeather) {
-      // Load cities too
-      _airAPI
-          .getCities(cityWeather.country, cityWeather.state)
-          .then((localCities) {
-        setState(() {
-          _localCities = localCities;
-        });
-      });
-      setState(() {
-        _cityWeather = cityWeather;
-      });
+    _fetchWeather();
+
+    connectivityStream = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) {
+      // If not fetched, try fetching again
+      if (_cityWeather == null) {
+        _fetchWeather();
+      }
+    });
+  }
+
+  _activateListeners() {
+    notesRef.onValue.listen((event) {
+      _fetchNotes(event.snapshot);
+    });
+
+    favCitiesRef.onValue.listen((event) {
+      _fetchFavouriteCities(event.snapshot);
     });
   }
 
@@ -154,28 +179,26 @@ class _MyHomePageState extends State<MyHomePage>
     return userReference.child('favCities');
   }
 
-  _fetchNotes() {
+  _fetchNotes(DataSnapshot snapshot) {
     _notes.clear();
-    notesRef.get().then((snapshot) {
-      Object notesObj = snapshot.value ?? <Object, Object>{};
-      var notesObjMap = notesObj as Map<Object?, Object?>;
-      Map<String, dynamic> dbNotes = notesObjMap.cast<String, dynamic>();
+    Object notesObj = snapshot.value ?? <Object, Object>{};
+    var notesObjMap = notesObj as Map<Object?, Object?>;
+    Map<String, dynamic> dbNotes = notesObjMap.cast<String, dynamic>();
 
-      for (var noteEntry in dbNotes.entries) {
-        Map<String, dynamic> noteMap = noteEntry.value.cast<String, dynamic>();
-        _notes.add(Note.fromRTDB(noteEntry.key, noteMap));
-      }
-    });
+    for (var noteEntry in dbNotes.entries) {
+      Map<String, dynamic> noteMap = noteEntry.value.cast<String, dynamic>();
+      _notes.add(Note.fromRTDB(noteEntry.key, noteMap));
+    }
   }
 
-  _fetchFavouriteCities() {
+  _fetchFavouriteCities(DataSnapshot snapshot) {
     _favouriteCities.clear();
-    favCitiesRef.get().then((snapshot) {
-      Object favCitiesObj = snapshot.value ?? <Object, Object>{};
-      var citiesObjMap = favCitiesObj as Map<Object?, Object?>;
-      Map<String, bool> dbCities = citiesObjMap.cast<String, bool>();
-      _favouriteCities.addAll(dbCities);
-    });
+    Object favCitiesObj = snapshot.value ?? <Object, Object>{};
+    var citiesObjMap = favCitiesObj as Map<Object?, Object?>;
+    Map<String, bool> dbCities = citiesObjMap.cast<String, bool>();
+    for (String cityEncoded in dbCities.keys) {
+      _favouriteCities.add(City.fromBase64(cityEncoded));
+    }
   }
 
   @override
@@ -188,7 +211,7 @@ class _MyHomePageState extends State<MyHomePage>
     showSearch(context: context, delegate: CitySearchDelegate(api: _airAPI))
         .then((result) {
       if (result != null) {
-        openCityWeather(result);
+        openCityWeather(result, _favouriteCities.contains(result));
       }
     });
   }
@@ -232,7 +255,16 @@ class _MyHomePageState extends State<MyHomePage>
       if (_loggedUser != null) {
         favCitiesRef.child(city.toBase64).set(true);
       }
-      _favouriteCities[city.toBase64] = true;
+      _favouriteCities.add(city);
+    });
+  }
+
+  _removeFavouriteCityByIndex(int index) {
+    setState(() {
+      if (_loggedUser != null) {
+        favCitiesRef.child(_favouriteCities.elementAt(index).toBase64).remove();
+      }
+      _favouriteCities.removeAt(index);
     });
   }
 
@@ -241,14 +273,40 @@ class _MyHomePageState extends State<MyHomePage>
       if (_loggedUser != null) {
         favCitiesRef.child(city.toBase64).remove();
       }
-      _favouriteCities.remove(city.toBase64);
+      _favouriteCities.remove(city);
     });
+  }
+
+  SnackBar _weatherNotReady() {
+    return const SnackBar(
+      content: Text('Weather data not ready'),
+    );
+  }
+
+  SnackBar _networkIssue() {
+    return const SnackBar(
+      content: Text('The weather API could not be reached'),
+    );
+  }
+
+  SnackBar _dbNetworkIssue() {
+    return const SnackBar(
+      content: Text('Database could not be reached'),
+    );
+  }
+
+  _showSnackBar(SnackBar snackBar) {
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   _handleFABPress() {
     switch (_tabController.index) {
       case 0:
-        Share.share(_cityWeather.getShareMsg);
+        if (_cityWeather == null) {
+          _showSnackBar(_weatherNotReady());
+        } else {
+          Share.share(_cityWeather?.getShareMsg ?? "");
+        }
         break;
       case 1:
         break;
@@ -260,28 +318,29 @@ class _MyHomePageState extends State<MyHomePage>
     }
   }
 
-  Widget _weatherTabWrapper(CityWeather cityWeather) {
-    return Scaffold(
-        appBar: AppBar(
-          title: Text('Weather at ${cityWeather.city}'),
-          actions: <Widget>[
-            IconButton(
-                onPressed: (() {
-                  Share.share(cityWeather.getShareMsg);
-                }),
-                icon: const Icon(Icons.share))
-          ],
-        ),
-        body: WeatherTab(cityWeather: cityWeather));
-  }
-
-  openCityWeather(City city) {
+  openCityWeather(City city, bool fav) {
     _airAPI.getWeatherFromCity(city).then((cityWeather) {
       Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => _weatherTabWrapper(cityWeather)),
-      );
+            builder: (context) => WeatherWrapper(
+                  weather: cityWeather,
+                  favourite: fav,
+                  onShare: (() {
+                    Share.share(cityWeather.getShareMsg);
+                  }),
+                  onFavTap: ((bool fav) {
+                    if (fav) {
+                      _addFavouriteCity(cityWeather.asCity);
+                    } else {
+                      _removeFavouriteCity(city);
+                    }
+                  }),
+                )),
+      ).then((value) {});
+    }).catchError((Object obj, StackTrace trace) {
+      log(trace.toString());
+      _showSnackBar(_networkIssue());
     });
   }
 
@@ -333,18 +392,13 @@ class _MyHomePageState extends State<MyHomePage>
         children: <Widget>[
           WeatherTab(cityWeather: _cityWeather),
           CityTab(
-            cities: _localCities,
-            favCities: _favouriteCities,
+            cities: _favouriteCities,
             controller: _cityScrollController,
             onTap: ((index) {
-              openCityWeather(_localCities.elementAt(index));
+              openCityWeather(_favouriteCities.elementAt(index), true);
             }),
-            onFavTap: ((index, favourite) {
-              if (favourite) {
-                _addFavouriteCity(_localCities.elementAt(index));
-              } else {
-                _removeFavouriteCity(_localCities.elementAt(index));
-              }
+            onFavTap: ((index) {
+              _removeFavouriteCityByIndex(index);
             }),
           ),
           NoteTab(

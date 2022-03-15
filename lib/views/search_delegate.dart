@@ -14,24 +14,15 @@ class LocationChip {
 }
 
 class CitySearchDelegate extends SearchDelegate {
-  List<String> _countries = [];
-  List<iq_state.State> _states = [];
-  List<City> _cities = [];
   List<LocationChip> chips = [];
-
+  List<String> locationItems = [];
   WeatherAPI api;
   var searchState = SearchState.country;
-
-  Future<List<String>>? _countriesFuture;
-  Future<List<iq_state.State>>? _statesFuture;
-  Future<List<City>>? _citiesFuture;
 
   @override
   String? get searchFieldLabel => "Search a city...";
 
-  CitySearchDelegate({required this.api}) {
-    _countriesFuture = _fetchCountries();
-  }
+  CitySearchDelegate({required this.api});
 
   Future<List<String>> _fetchCountries() async {
     List<String> countries = [];
@@ -44,7 +35,11 @@ class CitySearchDelegate extends SearchDelegate {
 
     // If db is empty, fetch from API
     if (countries.isEmpty) {
-      countries = await api.getCountries();
+      try {
+        countries = await api.getCountries();
+      } catch (e) {
+        return Future.error(e.toString());
+      }
       countriesDb.insertCountries(countries);
     }
 
@@ -54,8 +49,11 @@ class CitySearchDelegate extends SearchDelegate {
   Future<List<iq_state.State>> _fetchStates(String country) async {
     List<iq_state.State> states = [];
     if (states.isEmpty) {
-      states = await api.getStates(country);
-      //statesDb.insertStates(states);
+      try {
+        states = await api.getStates(country);
+      } catch (e) {
+        return Future.error(e.toString());
+      }
     }
     return states;
   }
@@ -64,7 +62,6 @@ class CitySearchDelegate extends SearchDelegate {
     List<City> cities = [];
     if (cities.isEmpty) {
       cities = await api.getCities(country, state);
-      //citiesDb.insertCountries(countries);
     }
     return cities;
   }
@@ -74,10 +71,12 @@ class CitySearchDelegate extends SearchDelegate {
 
     if (chip.type == SearchState.country) {
       chips.clear();
+      locationItems.clear();
     }
 
     if (chip.type == SearchState.state) {
       chips.removeLast();
+      locationItems.removeLast();
     }
   }
 
@@ -112,6 +111,146 @@ class CitySearchDelegate extends SearchDelegate {
     );
   }
 
+  Widget apiErrorWidget() {
+    return const Center(child: Text("No items were found."));
+  }
+
+  Widget waitingWidget() {
+    return const Center(child: CircularProgressIndicator());
+  }
+
+  Widget dividerWidget() {
+    return const Divider(thickness: 2, height: 2);
+  }
+
+  _citiesFutureBuilder(BuildContext context, StateSetter setState) {
+    return FutureBuilder<List<City>>(
+        future: _fetchCities(locationItems.first, locationItems.last),
+        builder: (BuildContext context, AsyncSnapshot<List<City>> snapshot) {
+          List<City> suggestions = [];
+          if (snapshot.hasError) {
+            return apiErrorWidget();
+          } else if (snapshot.hasData) {
+            List<City> citiesFetched = snapshot.data ?? [];
+            suggestions.addAll(citiesFetched.where((element) {
+              return element.city.toLowerCase().contains(query.toLowerCase());
+            }));
+            return ListView.separated(
+              itemCount: suggestions.length,
+              separatorBuilder: ((context, index) {
+                return dividerWidget();
+              }),
+              itemBuilder: ((context, index) {
+                City city = suggestions.elementAt(index);
+                return _searchListItem(city.city, onTap: (() {
+                  setState(() {
+                    close(context, city);
+                  });
+                }));
+              }),
+            );
+          } else {
+            return waitingWidget();
+          }
+        });
+  }
+
+  _statesFutureBuilder(BuildContext context, StateSetter setState) {
+    return FutureBuilder<List<iq_state.State>>(
+        future: _fetchStates(locationItems.first),
+        builder: (BuildContext context,
+            AsyncSnapshot<List<iq_state.State>> snapshot) {
+          List<iq_state.State> suggestions = [];
+          if (snapshot.hasError) {
+            return apiErrorWidget();
+          } else if (snapshot.hasData) {
+            List<iq_state.State> statesFetched = snapshot.data ?? [];
+            suggestions.addAll(statesFetched.where((element) {
+              return element.state.toLowerCase().contains(query.toLowerCase());
+            }));
+            return ListView.separated(
+              itemCount: suggestions.length,
+              separatorBuilder: ((context, index) {
+                return dividerWidget();
+              }),
+              itemBuilder: ((context, index) {
+                iq_state.State state = suggestions.elementAt(index);
+                return _searchListItem(state.state, onTap: (() {
+                  setState(() {
+                    locationItems.add(state.state);
+                    searchState = SearchState.city;
+                    chips.add(LocationChip(state.state, SearchState.state));
+                    query = "";
+                  });
+                }));
+              }),
+            );
+          } else {
+            return waitingWidget();
+          }
+        });
+  }
+
+  _countriesFutureBuilder(BuildContext context, StateSetter setState) {
+    return FutureBuilder<List<String>>(
+        future: _fetchCountries(),
+        builder: (BuildContext context, AsyncSnapshot<List<String>> snapshot) {
+          List<String> suggestions = [];
+          if (snapshot.hasError) {
+            return apiErrorWidget();
+          } else if (snapshot.hasData) {
+            List<String> countriesFetched = snapshot.data ?? [];
+            suggestions.addAll(countriesFetched.where((element) =>
+                element.toLowerCase().contains(query.toLowerCase())));
+            return ListView.separated(
+              itemCount: suggestions.length,
+              separatorBuilder: ((context, index) {
+                return dividerWidget();
+              }),
+              itemBuilder: ((context, index) {
+                String country = suggestions.elementAt(index);
+                return _searchListItem(country, onTap: (() {
+                  setState(() {
+                    locationItems.add(country);
+                    searchState = SearchState.state;
+                    chips.add(LocationChip(country, SearchState.country));
+                    query = "";
+                  });
+                }));
+              }),
+            );
+          } else {
+            return waitingWidget();
+          }
+        });
+  }
+
+  FutureBuilder _futureBuilder(BuildContext context, StateSetter setState) {
+    switch (searchState) {
+      case SearchState.country:
+        return _countriesFutureBuilder(context, setState);
+      case SearchState.state:
+        return _statesFutureBuilder(context, setState);
+      case SearchState.city:
+        return _citiesFutureBuilder(context, setState);
+    }
+  }
+
+  StatefulBuilder resultsWidget(BuildContext context) {
+    return StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+      return Column(
+        children: [
+          // Chippy row
+          _chippyRow(chips, setState),
+          Expanded(
+              // Countries Future Builder
+              child: _futureBuilder(context, setState))
+        ],
+      );
+    });
+  }
+
   @override
   List<Widget>? buildActions(BuildContext context) {
     return <Widget>[
@@ -136,147 +275,6 @@ class CitySearchDelegate extends SearchDelegate {
   @override
   Widget buildResults(BuildContext context) {
     return resultsWidget(context);
-  }
-
-  Widget apiErrorWidget() {
-    return const Center(child: Text("No items were found."));
-  }
-
-  Widget waitingWidget() {
-    return const Center(child: CircularProgressIndicator());
-  }
-
-  Widget dividerWidget() {
-    return const Divider(thickness: 2, height: 2);
-  }
-
-  _citiesFutureBuilder(BuildContext context, StateSetter setState) {
-    List<City> suggestions = [];
-    return FutureBuilder<List<City>>(
-        future: _citiesFuture,
-        builder: (BuildContext context, AsyncSnapshot<List<City>> snapshot) {
-          if (snapshot.hasError) {
-            return apiErrorWidget();
-          } else if (snapshot.hasData) {
-            List<City> statesFetched = snapshot.data ?? [];
-            suggestions.addAll(statesFetched.where((element) {
-              return element.state.toLowerCase().contains(query.toLowerCase());
-            }));
-            return ListView.separated(
-              itemCount: suggestions.length,
-              separatorBuilder: ((context, index) {
-                return dividerWidget();
-              }),
-              itemBuilder: ((context, index) {
-                City city = suggestions.elementAt(index);
-                return _searchListItem(city.city, onTap: (() {
-                  setState(() {
-                    close(context, city);
-                  });
-                }));
-              }),
-            );
-          } else {
-            return waitingWidget();
-          }
-        });
-  }
-
-  _statesFutureBuilder(BuildContext context, StateSetter setState) {
-    List<iq_state.State> suggestions = [];
-    return FutureBuilder<List<iq_state.State>>(
-        future: _statesFuture,
-        builder: (BuildContext context,
-            AsyncSnapshot<List<iq_state.State>> snapshot) {
-          if (snapshot.hasError) {
-            return apiErrorWidget();
-          } else if (snapshot.hasData) {
-            List<iq_state.State> statesFetched = snapshot.data ?? [];
-            suggestions.addAll(statesFetched.where((element) {
-              return element.state.toLowerCase().contains(query.toLowerCase());
-            }));
-            return ListView.separated(
-              itemCount: suggestions.length,
-              separatorBuilder: ((context, index) {
-                return dividerWidget();
-              }),
-              itemBuilder: ((context, index) {
-                iq_state.State state = suggestions.elementAt(index);
-                return _searchListItem(state.state, onTap: (() {
-                  setState(() {
-                    _citiesFuture = _fetchCities(state.country, state.state);
-                    searchState = SearchState.city;
-                    chips.add(LocationChip(state.state, SearchState.state));
-                    query = "";
-                  });
-                }));
-              }),
-            );
-          } else {
-            return waitingWidget();
-          }
-        });
-  }
-
-  _countriesFutureBuilder(BuildContext context, StateSetter setState) {
-    List<String> suggestions = [];
-    return FutureBuilder<List<String>>(
-        future: _countriesFuture,
-        builder: (BuildContext context, AsyncSnapshot<List<String>> snapshot) {
-          if (snapshot.hasError) {
-            return apiErrorWidget();
-          } else if (snapshot.hasData) {
-            List<String> countriesFetched = snapshot.data ?? [];
-            suggestions.addAll(countriesFetched.where((element) =>
-                element.toLowerCase().contains(query.toLowerCase())));
-            return ListView.separated(
-              itemCount: suggestions.length,
-              separatorBuilder: ((context, index) {
-                return dividerWidget();
-              }),
-              itemBuilder: ((context, index) {
-                String country = suggestions.elementAt(index);
-                return _searchListItem(country, onTap: (() {
-                  setState(() {
-                    _statesFuture = _fetchStates(country);
-                    searchState = SearchState.state;
-                    chips.add(LocationChip(country, SearchState.country));
-                    query = "";
-                  });
-                }));
-              }),
-            );
-          } else {
-            return waitingWidget();
-          }
-        });
-  }
-
-  FutureBuilder _futureBuilder(BuildContext context, StateSetter setState) {
-    List<String> suggestions = [];
-    switch (searchState) {
-      case SearchState.country:
-        return _countriesFutureBuilder(context, setState);
-      case SearchState.state:
-        return _statesFutureBuilder(context, setState);
-      case SearchState.city:
-        return _citiesFutureBuilder(context, setState);
-    }
-  }
-
-  StatefulBuilder resultsWidget(BuildContext context) {
-    return StatefulBuilder(
-        builder: (BuildContext context, StateSetter setState) {
-      return Column(
-        children: [
-          // Chippy row
-          _chippyRow(chips, setState),
-          Expanded(
-              // Countries Future Builder
-              child: _futureBuilder(context, setState))
-        ],
-      );
-    });
   }
 
   @override

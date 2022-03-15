@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mr_blue_sky/models/note.dart';
+import 'package:share_plus/share_plus.dart';
 
 class NoteWriter extends StatefulWidget {
   const NoteWriter({Key? key, required this.note}) : super(key: key);
@@ -45,6 +46,12 @@ class _NoteWriterState extends State<NoteWriter> {
         },
         child: Scaffold(
             appBar: AppBar(actions: <Widget>[
+              IconButton(
+                  onPressed: (() {
+                    Share.share(
+                        '${titleController.text}\n\n${contentController.text}');
+                  }),
+                  icon: const Icon(Icons.share)),
               PopupMenuButton<String>(
                   onSelected: clear,
                   itemBuilder: (BuildContext context) {

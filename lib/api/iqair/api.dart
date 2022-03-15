@@ -38,7 +38,7 @@ class IQAir implements WeatherAPI {
     String status = jsonResponse['status'];
 
     if (status != 'success') {
-      throw ApiException();
+      throw ApiException(msg: status);
     }
     var jsonData = jsonResponse['data'];
     return jsonData;

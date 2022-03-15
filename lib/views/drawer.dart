@@ -44,6 +44,7 @@ class _MyAppDrawerState extends State<MyAppDrawer> {
                   accountEmail: Text(loggedUser.email ?? ""),
                   accountName: Text(loggedUser.displayName ?? ""),
                   currentAccountPicture: CircleAvatar(
+                      onBackgroundImageError: ((obj, stackTrack) {}),
                       backgroundColor: Colors.black45,
                       backgroundImage: NetworkImage(loggedUser.photoURL ?? "")),
                   decoration: _drawerDecoration(),

@@ -28,6 +28,6 @@ class City {
 
   String get toBase64 {
     Codec<String, String> stringToBase64 = utf8.fuse(base64);
-    return stringToBase64.encode("$_city;$_state;$_country");
+    return stringToBase64.encode("$_country;$_state;$_city");
   }
 }

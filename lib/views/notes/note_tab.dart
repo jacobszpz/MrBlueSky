@@ -20,6 +20,7 @@ class _NoteTabState extends State<NoteTab> {
   @override
   Widget build(BuildContext context) {
     notes = widget.notes;
+
     return notes.isNotEmpty
         ? ListView.builder(
             padding: const EdgeInsets.all(0),
