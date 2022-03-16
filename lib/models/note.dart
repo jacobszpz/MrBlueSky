@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mr_blue_sky/api/weather_type.dart';
 import 'package:uuid/uuid.dart';
+import 'package:weather_icons/weather_icons.dart';
 
 class Note {
   String title = "";
@@ -11,6 +12,7 @@ class Note {
   DateTime creationTimestamp = DateTime.now();
   String uuid = const Uuid().v1();
 
+  Note.fromWeather(this.weather);
   Note.fromNew(this.title, this.content, this.weather);
   Note.fromExisting(this.title, this.content, this.weather, this.editTimestamp,
       this.creationTimestamp, this.uuid);
@@ -39,13 +41,35 @@ class Note {
   IconData get icon {
     switch (weather) {
       case WeatherType.clearSkyDay:
-        return Icons.sunny;
+        return WeatherIcons.day_sunny;
       case WeatherType.clearSkyNight:
-        return Icons.nightlight_round;
+        return WeatherIcons.night_clear;
       case WeatherType.brokenClouds:
-        return Icons.cloud;
-      default:
-        return Icons.sunny;
+        return WeatherIcons.cloudy;
+      case WeatherType.fewCloudsDay:
+        return WeatherIcons.day_cloudy;
+      case WeatherType.fewCloudsNight:
+        return WeatherIcons.night_alt_cloudy;
+      case WeatherType.scatteredClouds:
+        return WeatherIcons.cloud;
+
+      case WeatherType.showerRain:
+        return WeatherIcons.showers;
+
+      case WeatherType.rainDay:
+        return WeatherIcons.day_rain;
+
+      case WeatherType.rainNight:
+        return WeatherIcons.night_alt_rain;
+
+      case WeatherType.thunderstorm:
+        return WeatherIcons.thunderstorm;
+
+      case WeatherType.snow:
+        return WeatherIcons.snow;
+
+      case WeatherType.mist:
+        return WeatherIcons.fog;
     }
   }
 

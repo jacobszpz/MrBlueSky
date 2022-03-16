@@ -11,7 +11,10 @@ import 'package:flutterfire_ui/auth.dart';
 import 'package:mr_blue_sky/api/iqair/api.dart';
 import 'package:mr_blue_sky/api/iqair/city.dart';
 import 'package:mr_blue_sky/api/iqair/city_weather.dart';
+import 'package:mr_blue_sky/api/weather_type.dart';
+import 'package:mr_blue_sky/models/fav_city.dart';
 import 'package:mr_blue_sky/models/note.dart';
+import 'package:mr_blue_sky/models/sort_orders.dart';
 import 'package:mr_blue_sky/views/cities/city_tab.dart';
 import 'package:mr_blue_sky/views/drawer.dart';
 import 'package:mr_blue_sky/views/notes/create_note.dart';
@@ -100,13 +103,14 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   final IQAir _airAPI = IQAir();
-  final List<City> _favouriteCities = [];
+  final List<FavCity> _favouriteCities = [];
   final List<Note> _notes = [];
   CityWeather? _cityWeather;
   bool _shareIcon = true;
   User? _loggedUser;
   late StreamSubscription connectivityStream;
   bool isFabVisible = true;
+  SortingOrder citySortingOrder = SortingOrder.alphabet;
 
   final _db = FirebaseDatabase.instanceFor(
           app: Firebase.app(),
@@ -222,16 +226,27 @@ class _MyHomePageState extends State<MyHomePage>
       Map<String, dynamic> noteMap = noteEntry.value.cast<String, dynamic>();
       _notes.add(Note.fromRTDB(noteEntry.key, noteMap));
     }
+
+    setState(() {
+      _notes
+          .sort(((a, b) => a.creationTimestamp.compareTo(b.creationTimestamp)));
+    });
   }
 
   _fetchFavouriteCities(DataSnapshot snapshot) {
     _favouriteCities.clear();
     Object favCitiesObj = snapshot.value ?? <Object, Object>{};
     var citiesObjMap = favCitiesObj as Map<Object?, Object?>;
-    Map<String, bool> dbCities = citiesObjMap.cast<String, bool>();
-    for (String cityEncoded in dbCities.keys) {
-      _favouriteCities.add(City.fromBase64(cityEncoded));
+    Map<String, dynamic> dbCities = citiesObjMap.cast<String, dynamic>();
+
+    for (var cityEntry in dbCities.entries) {
+      Map<String, dynamic> cityMap = cityEntry.value.cast<String, dynamic>();
+      _favouriteCities.add(FavCity.fromMap(cityEntry.key, cityMap));
     }
+
+    setState(() {
+      _favouriteCities.sort(((a, b) => a.dateAdded.compareTo(b.dateAdded)));
+    });
   }
 
   @override
@@ -260,8 +275,10 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   _writeNewNote() async {
-    Note newNote =
-        await Navigator.of(context).push(createNoteWriterRoute(Note.empty()));
+    WeatherType noteWeatherType =
+        _cityWeather?.weather.type ?? WeatherType.clearSkyDay;
+    Note newNote = await Navigator.of(context)
+        .push(createNoteWriterRoute(Note.fromWeather(noteWeatherType)));
     setState(() {
       if (newNote.isNotEmpty) {
         if (_loggedUser != null) {
@@ -283,21 +300,23 @@ class _MyHomePageState extends State<MyHomePage>
     return newNote;
   }
 
-  _addFavouriteCity(City city) {
+  _addFavouriteCity(CityWeather city) {
+    FavCity fav = FavCity.fromCities(city, _cityWeather ?? CityWeather.empty());
     setState(() {
       if (_loggedUser != null) {
-        favCitiesRef.child(city.toBase64).set(true);
+        favCitiesRef.child(city.asCity.toBase64).set(fav.toMap());
       }
-      _favouriteCities.add(city);
+      _favouriteCities.add(fav);
     });
   }
 
   _removeFavouriteCityByIndex(int index) {
     setState(() {
+      FavCity deleted = _favouriteCities.removeAt(index);
+
       if (_loggedUser != null) {
-        favCitiesRef.child(_favouriteCities.elementAt(index).toBase64).remove();
+        favCitiesRef.child(deleted.city.toBase64).remove();
       }
-      _favouriteCities.removeAt(index);
     });
   }
 
@@ -306,7 +325,7 @@ class _MyHomePageState extends State<MyHomePage>
       if (_loggedUser != null) {
         favCitiesRef.child(city.toBase64).remove();
       }
-      _favouriteCities.remove(city);
+      _favouriteCities.removeWhere((element) => element.city == city);
     });
   }
 
@@ -359,9 +378,9 @@ class _MyHomePageState extends State<MyHomePage>
                   }),
                   onFavTap: ((bool fav) {
                     if (fav) {
-                      _addFavouriteCity(cityWeather.asCity);
+                      _addFavouriteCity(cityWeather);
                     } else {
-                      _removeFavouriteCity(city);
+                      _removeFavouriteCity(cityWeather.asCity);
                     }
                   }),
                 )),
@@ -372,9 +391,26 @@ class _MyHomePageState extends State<MyHomePage>
     });
   }
 
+  _changeSortingOrder(SortingOrder order, int tabIndex) {
+    if (tabIndex == 2) {
+      if (order == SortingOrder.time) {
+        setState(() {
+          _notes.sort(
+              ((a, b) => a.creationTimestamp.compareTo(b.creationTimestamp)));
+        });
+      } else if (order == SortingOrder.alphabet) {
+        setState(() {
+          _notes.sort(((a, b) => a.title.compareTo(b.title)));
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     const duration = Duration(milliseconds: 200);
+    ThemeData theme = Theme.of(context);
+
     return Scaffold(
         drawer: MyAppDrawer(
           loggedUser: _loggedUser,
@@ -392,7 +428,7 @@ class _MyHomePageState extends State<MyHomePage>
         appBar: AppBar(
             title: Text(widget.title),
             bottom: TabBar(
-              indicatorColor: Theme.of(context).colorScheme.secondary,
+              indicatorColor: theme.colorScheme.secondary,
               onTap: ((index) {
                 switch (index) {
                   case 1:
@@ -409,13 +445,39 @@ class _MyHomePageState extends State<MyHomePage>
               tabs: _homeTabs,
             ),
             actions: <Widget>[
+              AnimatedOpacity(
+                duration: Duration(milliseconds: 200),
+                opacity: (_tabController.index != 0) ? 1 : 0,
+                child: PopupMenuButton(
+                    icon: Icon(Icons.sort, color: theme.canvasColor),
+                    onSelected: ((SortingOrder order) {
+                      _changeSortingOrder(order, _tabController.index);
+                    }),
+                    itemBuilder: (BuildContext context) {
+                      return <PopupMenuItem<SortingOrder>>[
+                        const PopupMenuItem(
+                          child: Text('Alphabetically'),
+                          value: SortingOrder.alphabet,
+                        ),
+                        const PopupMenuItem(
+                          child: Text('Date Added'),
+                          value: SortingOrder.time,
+                        ),
+                        if (_tabController.index == 1)
+                          const PopupMenuItem(
+                            child: Text('Distance'),
+                            value: SortingOrder.distance,
+                          )
+                      ];
+                    }),
+              ),
               IconButton(
                 icon: const Icon(Icons.search),
                 tooltip: 'Search city',
                 onPressed: () {
                   _onSearchTap();
                 },
-              ),
+              )
             ]),
         body: TabBarView(
           controller: _tabController,
@@ -424,15 +486,14 @@ class _MyHomePageState extends State<MyHomePage>
                 cityWeather: _cityWeather,
                 scrollController: _weatherScrollController),
             CityTab(
-              cities: _favouriteCities,
-              controller: _cityScrollController,
-              onTap: ((index) {
-                openCityWeather(_favouriteCities.elementAt(index), true);
-              }),
-              onFavTap: ((index) {
-                _removeFavouriteCityByIndex(index);
-              }),
-            ),
+                cities: _favouriteCities,
+                controller: _cityScrollController,
+                onTap: ((index) {
+                  openCityWeather(_favouriteCities.elementAt(index).city, true);
+                }),
+                onFavTap: ((index) {
+                  _removeFavouriteCityByIndex(index);
+                })),
             NoteTab(
               notes: _notes,
               onTap: (int index) {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mr_blue_sky/api/iqair/city.dart';
+import 'package:mr_blue_sky/models/fav_city.dart';
 
 import 'city_container.dart';
 
@@ -12,7 +12,7 @@ class CityTab extends StatelessWidget {
       this.onFavTap})
       : super(key: key);
 
-  final List<City> cities;
+  final List<FavCity> cities;
   final ScrollController? controller;
   final Function(int index)? onTap;
   final Function(int index)? onFavTap;
@@ -29,7 +29,7 @@ class CityTab extends StatelessWidget {
             itemCount: cities.length,
             itemBuilder: (BuildContext context, int index) {
               return CityContainer(
-                  city: cities.elementAt(index),
+                  city: cities.elementAt(index).city,
                   isFavourite: true,
                   onTap: (() {
                     onTap!(index);
