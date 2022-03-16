@@ -22,9 +22,15 @@ class _NoteTabState extends State<NoteTab> {
     notes = widget.notes;
 
     return notes.isNotEmpty
-        ? ListView.builder(
+        ? ListView.separated(
             padding: const EdgeInsets.all(0),
             itemCount: notes.length,
+            separatorBuilder: (BuildContext context, int index) {
+              return const Divider(
+                thickness: 1,
+                height: 1,
+              );
+            },
             itemBuilder: (BuildContext context, int index) {
               Note note = notes.elementAt(index);
               return NoteContainer(

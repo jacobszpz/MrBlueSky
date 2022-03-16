@@ -5,7 +5,7 @@ import 'index.dart';
 class CountriesProvider {
   final columnId = '_id';
   final columnCountry = 'country';
-  Database? db;
+  late Database db;
 
   Future open() async {
     db = await openDatabase('${Databases.countriesDb}.db', version: 1,
@@ -19,7 +19,7 @@ class CountriesProvider {
   }
 
   Future<void> insertCountries(List<String> countries) async {
-    Batch batch = db!.batch();
+    Batch batch = db.batch();
     for (String country in countries) {
       batch.insert(Databases.countriesDb, {columnCountry: country});
     }
@@ -28,7 +28,7 @@ class CountriesProvider {
   }
 
   Future<List<String>> getAll() async {
-    List<Map> queryMaps = await db!
+    List<Map> queryMaps = await db
         .query(Databases.countriesDb, columns: [columnId, columnCountry]);
 
     List<String> countries = [];
@@ -39,5 +39,5 @@ class CountriesProvider {
     return countries;
   }
 
-  Future<void> close() async => db!.close();
+  Future<void> close() async => db.close();
 }

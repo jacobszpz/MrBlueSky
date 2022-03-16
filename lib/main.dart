@@ -12,6 +12,7 @@ import 'package:mr_blue_sky/api/iqair/api.dart';
 import 'package:mr_blue_sky/api/iqair/city.dart';
 import 'package:mr_blue_sky/api/iqair/city_weather.dart';
 import 'package:mr_blue_sky/api/weather_type.dart';
+import 'package:mr_blue_sky/db/notes.dart';
 import 'package:mr_blue_sky/models/fav_city.dart';
 import 'package:mr_blue_sky/models/note.dart';
 import 'package:mr_blue_sky/models/sort_orders.dart';
@@ -103,6 +104,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   final IQAir _airAPI = IQAir();
+  final NotesProvider _notesProvider = NotesProvider();
   final List<FavCity> _favouriteCities = [];
   final List<Note> _notes = [];
   CityWeather? _cityWeather;
@@ -151,6 +153,12 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void initState() {
     super.initState();
+    _notesProvider.open().then((value) {
+      _notesProvider.getAll().then((localNotes) {
+        _notes.addAll(localNotes);
+      });
+    });
+
     _cityScrollController = ScrollController();
     _weatherScrollController = ScrollController();
     _tabController = TabController(vsync: this, length: _homeTabs.length);
@@ -180,6 +188,18 @@ class _MyHomePageState extends State<MyHomePage>
           _activateListeners();
         }
       });
+
+      if (userStream != null) {
+        _notesProvider.open().then((value) {
+          // Copy all notes to firebase
+          _notesProvider.getAll().then((notes) {
+            for (Note note in notes) {
+              notesRef.child(note.uuid).set(note.toMap());
+              _notesProvider.clear();
+            }
+          });
+        });
+      }
     });
 
     _fetchWeather();
@@ -269,9 +289,13 @@ class _MyHomePageState extends State<MyHomePage>
       var note = _notes.elementAt(index);
       if (_loggedUser != null) {
         notesRef.child(note.uuid).remove();
+      } else {
+        _notesProvider.delete(note.uuid);
       }
     }
-    _notes.removeAt(index);
+    setState(() {
+      _notes.removeAt(index);
+    });
   }
 
   _writeNewNote() async {
@@ -283,6 +307,8 @@ class _MyHomePageState extends State<MyHomePage>
       if (newNote.isNotEmpty) {
         if (_loggedUser != null) {
           notesRef.child(newNote.uuid).set(newNote.toMap());
+        } else {
+          _notesProvider.insertNote(newNote);
         }
         _notes.add(newNote);
       }
@@ -293,8 +319,14 @@ class _MyHomePageState extends State<MyHomePage>
   _editNote(int index) async {
     var newNote = await Navigator.of(context)
         .push(createNoteWriterRoute(_notes.elementAt(index)));
-    setState(() {
+    if (_loggedUser != null) {
       notesRef.child(newNote.uuid).set(newNote.toMap());
+    } else {
+      if (_loggedUser != null) {
+        _notesProvider.update(newNote);
+      }
+    }
+    setState(() {
       _notes[index] = newNote;
     });
     return newNote;
@@ -392,17 +424,29 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   _changeSortingOrder(SortingOrder order, int tabIndex) {
-    if (tabIndex == 2) {
-      if (order == SortingOrder.time) {
-        setState(() {
-          _notes.sort(
-              ((a, b) => a.creationTimestamp.compareTo(b.creationTimestamp)));
-        });
-      } else if (order == SortingOrder.alphabet) {
-        setState(() {
-          _notes.sort(((a, b) => a.title.compareTo(b.title)));
-        });
+    if (tabIndex == 1) {
+      int Function(FavCity a, FavCity b) sortingFunction =
+          ((a, b) => a.dateAdded.compareTo(b.dateAdded));
+      if (order == SortingOrder.alphabet) {
+        sortingFunction = ((a, b) => a.city.country.compareTo(b.city.country));
+      } else if (order == SortingOrder.distance) {
+        sortingFunction = ((a, b) => a.distance.compareTo(b.distance));
       }
+      setState(() {
+        _favouriteCities.sort(sortingFunction);
+      });
+    }
+    if (tabIndex == 2) {
+      int Function(Note a, Note b) sortingFunction =
+          ((a, b) => a.creationTimestamp.compareTo(b.creationTimestamp));
+      if (order == SortingOrder.alphabet) {
+        sortingFunction =
+            ((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+      }
+
+      setState(() {
+        _notes.sort(sortingFunction);
+      });
     }
   }
 

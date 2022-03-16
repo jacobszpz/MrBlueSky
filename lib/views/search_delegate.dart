@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:mr_blue_sky/api/iqair/city.dart';
 import 'package:mr_blue_sky/api/iqair/state.dart' as iq_state;
 import 'package:mr_blue_sky/api/weather_api.dart';
+import 'package:mr_blue_sky/db/cities_cache.dart';
 import 'package:mr_blue_sky/db/countries.dart';
+import 'package:mr_blue_sky/db/states_cache.dart';
 
 enum SearchState { country, state, city }
 
@@ -48,9 +50,15 @@ class CitySearchDelegate extends SearchDelegate {
 
   Future<List<iq_state.State>> _fetchStates(String country) async {
     List<iq_state.State> states = [];
+    var cacheDb = StatesCacheProvider();
+    await cacheDb.open();
+
+    // Fetch db entries
+    states = await cacheDb.getStates(country);
     if (states.isEmpty) {
       try {
         states = await api.getStates(country);
+        cacheDb.addStates(states);
       } catch (e) {
         return Future.error(e.toString());
       }
@@ -60,8 +68,15 @@ class CitySearchDelegate extends SearchDelegate {
 
   Future<List<City>> _fetchCities(String country, String state) async {
     List<City> cities = [];
+    // Open city database
+    var cacheDb = CitiesCacheProvider();
+    await cacheDb.open();
+
+    // Fetch db entries
+    cities = await cacheDb.getCities(country, state);
     if (cities.isEmpty) {
       cities = await api.getCities(country, state);
+      cacheDb.addCities(cities);
     }
     return cities;
   }

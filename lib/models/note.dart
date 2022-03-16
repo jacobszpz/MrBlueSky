@@ -38,6 +38,17 @@ class Note {
     };
   }
 
+  Map<String, dynamic> toUUIDMap() {
+    return <String, dynamic>{
+      'title': title,
+      'content': content,
+      'editTimestamp': editTimestamp.millisecondsSinceEpoch,
+      'creationTimestamp': creationTimestamp.millisecondsSinceEpoch,
+      'weatherType': weather.name,
+      'uuid': uuid
+    };
+  }
+
   IconData get icon {
     switch (weather) {
       case WeatherType.clearSkyDay:

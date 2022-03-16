@@ -23,7 +23,7 @@ class CityTab extends StatelessWidget {
         ? ListView.separated(
             controller: controller,
             separatorBuilder: (BuildContext context, int index) {
-              return const Divider(height: 0, thickness: 1.5);
+              return const Divider(height: 1, thickness: 2);
             },
             padding: const EdgeInsets.all(0),
             itemCount: cities.length,
