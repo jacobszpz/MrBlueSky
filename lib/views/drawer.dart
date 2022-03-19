@@ -4,17 +4,18 @@ import 'package:flutterfire_ui/auth.dart';
 import 'package:mr_blue_sky/views/settings.dart';
 
 class MyAppDrawer extends StatefulWidget {
-  MyAppDrawer({Key? key, this.loggedUser, this.onSignIn, this.onSignOut})
+  const MyAppDrawer({Key? key, this.onSignIn, this.onSignOut})
       : super(key: key);
-  User? loggedUser;
-  Function(BuildContext)? onSignOut;
-  Function(BuildContext, SignedIn)? onSignIn;
+  final Function(BuildContext)? onSignOut;
+  final Function(BuildContext, SignedIn)? onSignIn;
 
   @override
   State<MyAppDrawer> createState() => _MyAppDrawerState();
 }
 
 class _MyAppDrawerState extends State<MyAppDrawer> {
+  User? firebaseUser;
+
   BoxDecoration _drawerDecoration() {
     return const BoxDecoration(
         color: Colors.blue,
@@ -27,26 +28,37 @@ class _MyAppDrawerState extends State<MyAppDrawer> {
   }
 
   @override
+  void setState(fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
-    FirebaseAuth.instance.userChanges().listen((User? user) {});
+    FirebaseAuth.instance.userChanges().listen((userStream) {
+      setState(() {
+        firebaseUser = userStream;
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    User? loggedUser = widget.loggedUser;
+    final user = firebaseUser;
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          loggedUser != null
+          user != null
               ? UserAccountsDrawerHeader(
-                  accountEmail: Text(loggedUser.email ?? ""),
-                  accountName: Text(loggedUser.displayName ?? ""),
+                  accountEmail: Text(user.email ?? ""),
+                  accountName: Text(user.displayName ?? ""),
                   currentAccountPicture: CircleAvatar(
                       onBackgroundImageError: ((obj, stackTrack) {}),
                       backgroundColor: Colors.black45,
-                      backgroundImage: NetworkImage(loggedUser.photoURL ?? "")),
+                      backgroundImage: NetworkImage(user.photoURL ?? "")),
                   decoration: _drawerDecoration(),
                 )
               : DrawerHeader(
@@ -63,7 +75,7 @@ class _MyAppDrawerState extends State<MyAppDrawer> {
               Navigator.of(context).push(createSettingsRoute());
             },
           ),
-          loggedUser != null
+          user != null
               ? ListTile(
                   title: Text('Account', style: _drawerTileTextStyle()),
                   onTap: () {
@@ -73,7 +85,7 @@ class _MyAppDrawerState extends State<MyAppDrawer> {
                         MaterialPageRoute(
                             builder: (context) => ProfileScreen(actions: [
                                   SignedOutAction((context) {
-                                    widget.onSignOut!(context);
+                                    Navigator.pop(context);
                                   }),
                                 ])));
                   },
@@ -85,19 +97,17 @@ class _MyAppDrawerState extends State<MyAppDrawer> {
                   ),
                   onTap: () {
                     Navigator.pop(context);
-                    setState(() {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => SignInScreen(
-                                    actions: [
-                                      AuthStateChangeAction<SignedIn>(
-                                          (context, state) {
-                                        widget.onSignIn!(context, state);
-                                      }),
-                                    ],
-                                  )));
-                    });
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => SignInScreen(
+                                  actions: [
+                                    AuthStateChangeAction<SignedIn>(
+                                        (context, state) {
+                                      Navigator.pop(context);
+                                    }),
+                                  ],
+                                )));
                   },
                 )
         ],

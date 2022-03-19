@@ -57,18 +57,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       },
                       value: settings.api),
                   onPressed: (context) {},
-                ),
-                SettingsTile(
-                    title: const Text("Show top favourite city in weather"),
-                    leading: const Icon(Icons.favorite),
-                    trailing: Checkbox(
-                        onChanged: (bool? a) {
-                          setState(() {
-                            settings.showFavCity = !settings.showFavCity;
-                          });
-                        },
-                        value: settings.showFavCity),
-                    onPressed: (context) {})
+                )
               ])
             ])));
   }

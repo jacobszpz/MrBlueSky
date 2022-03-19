@@ -3,4 +3,5 @@ class Databases {
   static const statesDb = 'bluesky_states';
   static const citiesDb = 'bluesky_cities';
   static const notesDb = 'bluesky_notes';
+  static const favCitiesDb = 'bluesky_favs';
 }

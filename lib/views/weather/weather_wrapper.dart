@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:mr_blue_sky/api/iqair/city_weather.dart';
 import 'package:mr_blue_sky/views/weather/weather_tab.dart';
+import 'package:share_plus/share_plus.dart';
 
 class WeatherWrapper extends StatefulWidget {
   const WeatherWrapper(
       {Key? key,
-      required this.weather,
+      required this.cityWeather,
       required this.favourite,
-      required this.onShare,
       required this.onFavTap})
       : super(key: key);
   final bool favourite;
-  final CityWeather weather;
-  final Function() onShare;
+  final CityWeather cityWeather;
   final Function(bool favourite) onFavTap;
 
   @override
@@ -21,12 +20,10 @@ class WeatherWrapper extends StatefulWidget {
 
 class _WeatherWrapperState extends State<WeatherWrapper> {
   bool favourite = false;
-  CityWeather cityWeather = CityWeather.empty();
 
   @override
   void initState() {
     favourite = widget.favourite;
-    cityWeather = widget.weather;
     super.initState();
   }
 
@@ -34,7 +31,7 @@ class _WeatherWrapperState extends State<WeatherWrapper> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text('Weather at ${cityWeather.city}'),
+          title: Text('Weather at ${widget.cityWeather.city}'),
           actions: <Widget>[
             IconButton(
                 onPressed: (() {
@@ -47,11 +44,11 @@ class _WeatherWrapperState extends State<WeatherWrapper> {
                     Icon(favourite ? Icons.favorite : Icons.favorite_outline)),
             IconButton(
                 onPressed: (() {
-                  widget.onShare();
+                  Share.share(widget.cityWeather.getShareMsg);
                 }),
                 icon: const Icon(Icons.share))
           ],
         ),
-        body: WeatherTab(cityWeather: cityWeather));
+        body: WeatherTab(cityWeather: widget.cityWeather));
   }
 }

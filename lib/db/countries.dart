@@ -2,7 +2,7 @@ import 'package:sqflite/sqflite.dart';
 
 import 'index.dart';
 
-class CountriesProvider {
+class CountriesSQLite {
   final columnId = '_id';
   final columnCountry = 'country';
   late Database db;

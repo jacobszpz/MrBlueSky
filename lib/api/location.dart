@@ -1,4 +1,4 @@
-import 'package:mr_blue_sky/api/iqair/coords.dart';
+import 'package:mr_blue_sky/models/coords.dart';
 
 class Location {
   String _type = "";

@@ -4,6 +4,16 @@ import 'package:mr_blue_sky/api/weather_type.dart';
 import 'package:uuid/uuid.dart';
 import 'package:weather_icons/weather_icons.dart';
 
+class NoteFields {
+  static const id = '_id';
+  static const title = 'title';
+  static const content = 'content';
+  static const editTime = 'editTimestamp';
+  static const createTime = 'creationTimestamp';
+  static const weatherType = 'weatherType';
+  static const uuid = 'uuid';
+}
+
 class Note {
   String title = "";
   String content = "";
@@ -19,33 +29,34 @@ class Note {
   Note.empty();
 
   Note.fromRTDB(String dbUUID, Map<String, dynamic> map) {
-    title = map['title'];
-    content = map['content'];
-    editTimestamp = DateTime.fromMillisecondsSinceEpoch(map['editTimestamp']);
+    title = map[NoteFields.title];
+    content = map[NoteFields.content];
+    editTimestamp =
+        DateTime.fromMillisecondsSinceEpoch(map[NoteFields.editTime]);
     creationTimestamp =
-        DateTime.fromMillisecondsSinceEpoch(map['creationTimestamp']);
-    weather = WeatherType.values.byName(map['weatherType']);
+        DateTime.fromMillisecondsSinceEpoch(map[NoteFields.createTime]);
+    weather = WeatherType.values.byName(map[NoteFields.weatherType]);
     uuid = dbUUID;
   }
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
-      'title': title,
-      'content': content,
-      'editTimestamp': editTimestamp.millisecondsSinceEpoch,
-      'creationTimestamp': creationTimestamp.millisecondsSinceEpoch,
-      'weatherType': weather.name
+      NoteFields.title: title,
+      NoteFields.content: content,
+      NoteFields.editTime: editTimestamp.millisecondsSinceEpoch,
+      NoteFields.createTime: creationTimestamp.millisecondsSinceEpoch,
+      NoteFields.weatherType: weather.name
     };
   }
 
   Map<String, dynamic> toUUIDMap() {
     return <String, dynamic>{
-      'title': title,
-      'content': content,
-      'editTimestamp': editTimestamp.millisecondsSinceEpoch,
-      'creationTimestamp': creationTimestamp.millisecondsSinceEpoch,
-      'weatherType': weather.name,
-      'uuid': uuid
+      NoteFields.title: title,
+      NoteFields.content: content,
+      NoteFields.editTime: editTimestamp.millisecondsSinceEpoch,
+      NoteFields.createTime: creationTimestamp.millisecondsSinceEpoch,
+      NoteFields.weatherType: weather.name,
+      NoteFields.uuid: uuid
     };
   }
 
@@ -63,22 +74,16 @@ class Note {
         return WeatherIcons.night_alt_cloudy;
       case WeatherType.scatteredClouds:
         return WeatherIcons.cloud;
-
       case WeatherType.showerRain:
         return WeatherIcons.showers;
-
       case WeatherType.rainDay:
         return WeatherIcons.day_rain;
-
       case WeatherType.rainNight:
         return WeatherIcons.night_alt_rain;
-
       case WeatherType.thunderstorm:
         return WeatherIcons.thunderstorm;
-
       case WeatherType.snow:
         return WeatherIcons.snow;
-
       case WeatherType.mist:
         return WeatherIcons.fog;
     }

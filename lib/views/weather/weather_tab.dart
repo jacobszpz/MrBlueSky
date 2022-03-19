@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mr_blue_sky/api/iqair/city_weather.dart';
-import 'package:mr_blue_sky/api/iqair/location.dart';
+import 'package:mr_blue_sky/api/location.dart';
 import 'package:mr_blue_sky/views/weather/weather_flottie.dart';
-import 'package:mr_blue_sky/views/weather_map.dart';
+import 'package:mr_blue_sky/views/weather/weather_map.dart';
 import 'package:positioned_tap_detector_2/positioned_tap_detector_2.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_icons/weather_icons.dart';
 
 class WeatherTab extends StatefulWidget {
@@ -33,6 +34,7 @@ enum WeatherWidgets {
 class _WeatherTabState extends State<WeatherTab> {
   Color iconColour = Colors.blue;
   final double iconSize = 40;
+  static const String prefsKey = 'widgetOrder';
 
   List<WeatherWidgets> widgetOrder = [
     WeatherWidgets.weatherMap,
@@ -40,6 +42,21 @@ class _WeatherTabState extends State<WeatherTab> {
     WeatherWidgets.airQualityCard,
     WeatherWidgets.pressureAndHumidity
   ];
+
+  @override
+  initState() {
+    super.initState();
+    SharedPreferences.getInstance().then((prefs) {
+      List<WeatherWidgets> savedOrder = widgetOrder;
+      List<String>? savedOrderStrings = prefs.getStringList(prefsKey);
+      if (savedOrderStrings != null) {
+        savedOrder = savedOrderStrings
+            .map((e) => WeatherWidgets.values.byName(e))
+            .toList();
+      }
+      widgetOrder = savedOrder;
+    });
+  }
 
   LatLng _locationToLatLng(Location location) {
     return LatLng(location.lat, location.long);
@@ -67,23 +84,31 @@ class _WeatherTabState extends State<WeatherTab> {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     fontSize: Theme.of(context).textTheme.headline5?.fontSize)),
-            Container(
-              //padding: const EdgeInsets.fromLTRB(12, 18, 12, 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  SizedBox(
-                    height: 100,
-                    width: 100,
-                    child: Lottie.asset(WeatherFlottieAssets.fromWeatherType(
-                        cityWeather.weather.type)),
-                  ),
-                  Row(children: [
-                    Text("${cityWeather.weather.temperature}°",
-                        style: const TextStyle(fontSize: 70)),
-                  ]),
-                ],
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                SizedBox(
+                  height: 100,
+                  width: 100,
+                  child: Lottie.asset(WeatherFlottieAssets.fromWeatherType(
+                      cityWeather.weather.type)),
+                ),
+                Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    textBaseline: TextBaseline.ideographic,
+                    children: [
+                      Text("${cityWeather.weather.temperature.c}",
+                          style: const TextStyle(fontSize: 60)),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6.0),
+                        child: Text(
+                          cityWeather.weather.temperature.cSymbol,
+                          style: const TextStyle(fontSize: 30),
+                        ),
+                      )
+                    ]),
+              ],
             ),
           ],
         ));
@@ -252,6 +277,14 @@ class _WeatherTabState extends State<WeatherTab> {
     return listWidget;
   }
 
+  _storeWidgetOrder() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> newOrder = widgetOrder
+        .map((WeatherWidgets weatherWidget) => weatherWidget.name)
+        .toList();
+    await prefs.setStringList(prefsKey, newOrder);
+  }
+
   @override
   Widget build(BuildContext context) {
     iconColour = Theme.of(context).colorScheme.secondary;
@@ -275,6 +308,8 @@ class _WeatherTabState extends State<WeatherTab> {
                             widgetOrder.removeAt(oldIndex);
                         widgetOrder.insert(newIndex, item);
                       });
+
+                      _storeWidgetOrder();
                     }),
                     children: <Widget>[
                       for (int i = 0; i < widgetOrder.length; ++i)

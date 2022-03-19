@@ -3,7 +3,7 @@ import 'package:mr_blue_sky/models/note.dart';
 
 import 'note_container.dart';
 
-class NoteTab extends StatefulWidget {
+class NoteTab extends StatelessWidget {
   const NoteTab({Key? key, required this.notes, this.onTap, this.onDismissed})
       : super(key: key);
   final List<Note> notes;
@@ -11,16 +11,7 @@ class NoteTab extends StatefulWidget {
   final Function(int index)? onDismissed;
 
   @override
-  State<NoteTab> createState() => _NoteTabState();
-}
-
-class _NoteTabState extends State<NoteTab> {
-  List<Note> notes = [];
-
-  @override
   Widget build(BuildContext context) {
-    notes = widget.notes;
-
     return notes.isNotEmpty
         ? ListView.separated(
             padding: const EdgeInsets.all(0),
@@ -37,12 +28,16 @@ class _NoteTabState extends State<NoteTab> {
                 note: Note.fromExisting(note.title, note.content, note.weather,
                     note.editTimestamp, note.creationTimestamp, note.uuid),
                 onTap: () {
-                  widget.onTap!(index);
+                  final _onTap = onTap;
+                  if (_onTap != null) {
+                    _onTap(index);
+                  }
                 },
                 onDismissed: () {
-                  setState(() {
-                    widget.onDismissed!(index);
-                  });
+                  final _onDismissed = onDismissed;
+                  if (_onDismissed != null) {
+                    _onDismissed(index);
+                  }
                 },
               );
             })

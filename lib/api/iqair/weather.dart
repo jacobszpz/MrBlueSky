@@ -1,12 +1,13 @@
+import 'package:mr_blue_sky/api/temperature.dart';
 import 'package:mr_blue_sky/api/weather_type.dart';
 
 class Weather {
   DateTime timestamp = DateTime.now();
-  int temperature = 0;
-  int pressure = 0;
-  int humidity = 0;
-  double windSpeed = 0;
-  int windDirection = 0;
+  Temperature temperature = Temperature.celsius(0);
+  num pressure = 0;
+  num humidity = 0;
+  num windSpeed = 0;
+  num windDirection = 0;
   WeatherType type = WeatherType.clearSkyDay;
 
   final Map<String, WeatherType> icons = {
@@ -26,7 +27,7 @@ class Weather {
 
   Weather(Map<String, dynamic> forecast) {
     timestamp = DateTime.parse(forecast['ts']);
-    temperature = forecast['tp'];
+    temperature = Temperature.celsius(forecast['tp']);
     pressure = forecast['pr'];
     humidity = forecast['hu'];
     windSpeed = forecast['ws'];

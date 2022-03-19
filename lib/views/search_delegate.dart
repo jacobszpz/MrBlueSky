@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mr_blue_sky/api/iqair/city.dart';
-import 'package:mr_blue_sky/api/iqair/state.dart' as iq_state;
+import 'package:mr_blue_sky/api/city.dart';
+import 'package:mr_blue_sky/api/iqair/api.dart';
+import 'package:mr_blue_sky/api/state.dart' as iq_state;
 import 'package:mr_blue_sky/api/weather_api.dart';
 import 'package:mr_blue_sky/db/cities_cache.dart';
 import 'package:mr_blue_sky/db/countries.dart';
@@ -15,21 +16,22 @@ class LocationChip {
   LocationChip(this.msg, this.type);
 }
 
+/// Country / state / city search widget
 class CitySearchDelegate extends SearchDelegate {
   List<LocationChip> chips = [];
   List<String> locationItems = [];
-  WeatherAPI api;
+  WeatherAPI api = IQAir();
   var searchState = SearchState.country;
 
   @override
   String? get searchFieldLabel => "Search a city...";
 
-  CitySearchDelegate({required this.api});
+  CitySearchDelegate();
 
   Future<List<String>> _fetchCountries() async {
     List<String> countries = [];
     // Open country database
-    var countriesDb = CountriesProvider();
+    var countriesDb = CountriesSQLite();
     await countriesDb.open();
 
     // Fetch db entries

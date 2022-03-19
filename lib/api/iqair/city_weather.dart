@@ -1,8 +1,8 @@
-import 'package:mr_blue_sky/api/iqair/city.dart';
-import 'package:mr_blue_sky/api/iqair/location.dart';
+import 'package:mr_blue_sky/api/city.dart';
+import 'package:mr_blue_sky/api/location.dart';
 import 'package:mr_blue_sky/api/iqair/pollution.dart';
-import 'package:mr_blue_sky/api/iqair/state.dart';
 import 'package:mr_blue_sky/api/iqair/weather.dart';
+import 'package:mr_blue_sky/api/state.dart';
 
 class CityWeather {
   String city = "";

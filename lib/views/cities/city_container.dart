@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mr_blue_sky/api/iqair/city.dart';
+import 'package:mr_blue_sky/api/city.dart';
 
 class CityContainer extends StatefulWidget {
   const CityContainer(

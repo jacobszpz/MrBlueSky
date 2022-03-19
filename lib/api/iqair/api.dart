@@ -5,8 +5,8 @@ import 'package:mr_blue_sky/api/iqair/city_weather.dart';
 import 'package:mr_blue_sky/api/iqair/exceptions.dart';
 import 'package:mr_blue_sky/api/weather_api.dart';
 
-import 'city.dart';
-import 'state.dart';
+import '../city.dart';
+import '../state.dart';
 
 /// Get data from the IQAir API
 ///
@@ -60,6 +60,7 @@ class IQAir implements WeatherAPI {
   }
 
   /// Returns the states which form part of a certain country
+  @override
   Future<List<State>> getStates(String country) async {
     var jsonData = await _getAPIData("states", {'country': country});
     var stateNames = _extractItems(jsonData, "state");
@@ -84,11 +85,13 @@ class IQAir implements WeatherAPI {
     return cities;
   }
 
+  @override
   Future<List<City>> getCitiesFromState(State state) async {
     return getCities(state.country, state.state);
   }
 
   /// Return the weather in a certain city
+  @override
   Future<CityWeather> getWeather(
       String country, String state, String city) async {
     var jsonData = await _getAPIData(
@@ -96,11 +99,13 @@ class IQAir implements WeatherAPI {
     return CityWeather(jsonData);
   }
 
+  @override
   Future<CityWeather> getWeatherFromCity(City city) async {
     return getWeather(city.country, city.state, city.city);
   }
 
   /// Return the weather in a certain city
+  @override
   Future<CityWeather> getNearestCityWeather() async {
     var jsonData = await _getAPIData("nearest_city");
     return CityWeather(jsonData);
