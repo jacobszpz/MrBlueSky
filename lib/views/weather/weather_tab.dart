@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mr_blue_sky/api/iqair/city_weather.dart';
+import 'package:mr_blue_sky/api/iqair/pollution.dart';
 import 'package:mr_blue_sky/api/location.dart';
 import 'package:mr_blue_sky/views/weather/weather_flottie.dart';
 import 'package:mr_blue_sky/views/weather/weather_map.dart';
 import 'package:positioned_tap_detector_2/positioned_tap_detector_2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:weather_icons/weather_icons.dart';
 
 class WeatherTab extends StatefulWidget {
@@ -165,6 +167,14 @@ class _WeatherTabState extends State<WeatherTab> {
         constraints: const BoxConstraints(maxHeight: 300, minHeight: 40));
   }
 
+  _launchAQIWebsite() async {
+    try {
+      await launch(Pollution.aqiURL);
+    } catch (error) {
+      // Error
+    }
+  }
+
   Card _airQualityCard({Key? key}) {
     CityWeather cityWeather = widget.cityWeather ?? CityWeather.empty();
     double? fontSize = Theme.of(context).textTheme.headline6?.fontSize;
@@ -179,13 +189,16 @@ class _WeatherTabState extends State<WeatherTab> {
               child: Icon(
                 Icons.speed,
                 size: iconSize,
-                color: iconColour,
+                color: cityWeather.pollution.aqiColor,
               ),
             ),
             title: Text(
               cityWeather.pollution.aqiUS.toString(),
               style: TextStyle(fontSize: fontSize),
             ),
+            onTap: (() {
+              _launchAQIWebsite();
+            }),
           ),
         ),
         Expanded(
@@ -242,18 +255,27 @@ class _WeatherTabState extends State<WeatherTab> {
 
   Card _windCard({Key? key}) {
     CityWeather cityWeather = widget.cityWeather ?? CityWeather.empty();
-    Widget child = Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        Text('${cityWeather.weather.windSpeed} m/s',
+    Widget child = Column(children: [
+      ListTile(
+        title: Text(cityWeather.weather.windDescription,
             style: TextStyle(
                 fontSize: Theme.of(context).textTheme.headline5?.fontSize)),
-        WindIcon(
-            size: 60,
-            degree: cityWeather.weather.windDirection,
-            color: iconColour),
-      ],
-    );
+        leading: BoxedIcon(cityWeather.weather.beaufortIcon,
+            size: iconSize, color: iconColour),
+      ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Text('${cityWeather.weather.windSpeed} m/s',
+              style: TextStyle(
+                  fontSize: Theme.of(context).textTheme.headline5?.fontSize)),
+          WindIcon(
+              size: 60,
+              degree: cityWeather.weather.windDirection,
+              color: iconColour),
+        ],
+      )
+    ]);
     return _weatherCardWrapper(child,
         title: _weatherCardTitle("Wind"), key: key);
   }

@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterfire_ui/auth.dart';
-import 'package:mr_blue_sky/views/settings.dart';
 
 class MyAppDrawer extends StatefulWidget {
   const MyAppDrawer({Key? key, this.onSignIn, this.onSignOut})
@@ -64,7 +63,7 @@ class _MyAppDrawerState extends State<MyAppDrawer> {
               : DrawerHeader(
                   decoration: _drawerDecoration(),
                   child: const SizedBox.shrink()),
-          ListTile(
+          /*ListTile(
             title: Text(
               'Settings',
               style: TextStyle(
@@ -74,7 +73,7 @@ class _MyAppDrawerState extends State<MyAppDrawer> {
               Navigator.pop(context);
               Navigator.of(context).push(createSettingsRoute());
             },
-          ),
+          ),*/
           user != null
               ? ListTile(
                   title: Text('Account', style: _drawerTileTextStyle()),

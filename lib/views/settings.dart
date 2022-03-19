@@ -65,7 +65,8 @@ class _SettingsPageState extends State<SettingsPage> {
 
 Route createSettingsRoute() {
   return PageRouteBuilder(
-    pageBuilder: (context, animation, secondaryAnimation) => SettingsPage(),
+    pageBuilder: (context, animation, secondaryAnimation) =>
+        const SettingsPage(),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       const double begin = 0.0;
       const double end = 1.0;

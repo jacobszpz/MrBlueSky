@@ -1,7 +1,7 @@
 import 'package:mr_blue_sky/models/coords.dart';
 
 class Location {
-  String _type = "";
+  //String _type = "";
   Coordinates _coords = Coordinates(0, 0);
 
   double get lat {
@@ -18,7 +18,7 @@ class Location {
 
   Location(Map<String, dynamic> location) {
     var coordsJson = location['coordinates'];
-    _type = location['type'];
+    //_type = location['type'];
     _coords = Coordinates(coordsJson[1], coordsJson[0]);
   }
 
