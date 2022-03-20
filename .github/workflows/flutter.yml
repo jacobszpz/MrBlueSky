@@ -30,8 +30,8 @@ jobs:
         run: flutter pub get
       - name: Generate mocks
         run: flutter pub run build_runner build
-      - name: Add minSdkVersion
-        run: echo "flutter.minSdkVersion=23" >> ./android/local.properties
+      - name: Where are we?
+        run: pwd
 
       # Uncomment this step to verify the use of 'dart format' on each commit.
       # - name: Verify formatting
