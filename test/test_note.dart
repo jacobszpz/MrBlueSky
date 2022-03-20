@@ -1,10 +1,12 @@
+import 'package:mockito/annotations.dart';
 import 'package:mr_blue_sky/api/weather_type.dart';
 import 'package:mr_blue_sky/models/note.dart';
 import 'package:test/test.dart';
 import 'package:weather_icons/weather_icons.dart';
 
-import 'fav_city_test.mocks.dart';
+import 'test_note.mocks.dart';
 
+@GenerateMocks([DateTime])
 void main() {
   group('Note', () {
     test('title getter', () {

@@ -25,8 +25,7 @@ class NoteTab extends StatelessWidget {
             itemBuilder: (BuildContext context, int index) {
               Note note = notes.elementAt(index);
               return NoteContainer(
-                note: Note.fromExisting(note.title, note.content, note.weather,
-                    note.editTimestamp, note.creationTimestamp, note.uuid),
+                note: note,
                 onTap: () {
                   final _onTap = onTap;
                   if (_onTap != null) {

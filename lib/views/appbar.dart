@@ -49,7 +49,7 @@ class MyAppBar extends StatelessWidget with PreferredSizeWidget {
             duration: const Duration(milliseconds: 200),
             opacity: (tabController.index != 0) ? 1 : 0,
             child: SortMenu(
-                enabled: (tabController.index != 0),
+                enabled: tabController.index != 0,
                 showDistanceSort: tabController.index == 1,
                 onSelected: ((SortingOrder order) {
                   final _onSort = onSort;

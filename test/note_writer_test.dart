@@ -9,7 +9,7 @@ import 'note_writer_test.mocks.dart';
 
 @GenerateMocks([Note])
 void main() {
-  testWidgets('Note writer test', (WidgetTester tester) async {
+  testWidgets('Note writer create', (WidgetTester tester) async {
     var title = 'Note title';
     var content = 'Note content';
 
@@ -60,5 +60,29 @@ void main() {
 
     await tester.enterText(find.text(content), newContent);
     expect(find.text(newContent), findsOneWidget);
+  });
+
+  testWidgets('Note writer clear', (WidgetTester tester) async {
+    var title = 'Note title';
+    var content = 'Note content';
+    var clearButton = 'Clear';
+
+    var mockNote = MockNote();
+    when(mockNote.title).thenReturn(title);
+    when(mockNote.content).thenReturn(content);
+
+    await tester.pumpWidget(MaterialApp(
+        home: NoteWriter(
+      note: mockNote,
+    )));
+
+    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.pumpAndSettle();
+    expect(find.text(clearButton), findsOneWidget);
+
+    await tester.tap(find.text(clearButton));
+    await tester.pumpAndSettle();
+    expect(find.text(title), findsNothing);
+    expect(find.text(content), findsNothing);
   });
 }
