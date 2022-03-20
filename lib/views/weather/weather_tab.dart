@@ -16,11 +16,13 @@ class WeatherTab extends StatefulWidget {
       {Key? key,
       required this.cityWeather,
       this.onTapWeather,
-      this.scrollController})
+      this.scrollController,
+      this.showMap = true})
       : super(key: key);
   final Function()? onTapWeather;
   final CityWeather? cityWeather;
   final ScrollController? scrollController;
+  final bool showMap;
 
   @override
   State<WeatherTab> createState() => _WeatherTabState();
@@ -281,9 +283,11 @@ class _WeatherTabState extends State<WeatherTab> {
   }
 
   Widget _getWidgetAtPosition(int index) {
-    Widget listWidget = const SizedBox.shrink();
     Key key = Key(index.toString());
-    if (widgetOrder.elementAt(index) == WeatherWidgets.weatherMap) {
+    Widget listWidget = SizedBox.shrink(key: key);
+
+    if (widgetOrder.elementAt(index) == WeatherWidgets.weatherMap &&
+        widget.showMap) {
       listWidget = _mapContainer(key: key);
     }
     if (widgetOrder.elementAt(index) == WeatherWidgets.windCard) {

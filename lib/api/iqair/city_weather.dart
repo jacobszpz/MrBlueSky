@@ -1,7 +1,7 @@
 import 'package:mr_blue_sky/api/city.dart';
-import 'package:mr_blue_sky/api/location.dart';
 import 'package:mr_blue_sky/api/iqair/pollution.dart';
 import 'package:mr_blue_sky/api/iqair/weather.dart';
+import 'package:mr_blue_sky/api/location.dart';
 import 'package:mr_blue_sky/api/state.dart';
 
 class CityWeather {
@@ -30,7 +30,7 @@ class CityWeather {
   }
 
   String get getShareMsg {
-    return "Hi, I'm in $city, $country, and it's ${weather.temperature}° celsius!.";
+    return "Hi, I'm in $city, $country, and it's ${weather.temperature} celsius!.";
   }
 
   State get asState {

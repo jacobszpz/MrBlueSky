@@ -4,15 +4,21 @@ import 'package:mr_blue_sky/models/sort_orders.dart';
 /// PopupMenu with different sorting criteria
 class SortMenu extends StatelessWidget {
   const SortMenu(
-      {Key? key, required this.onSelected, required this.showDistanceSort})
+      {Key? key,
+      required this.onSelected,
+      required this.showDistanceSort,
+      required this.enabled})
       : super(key: key);
   final Function(SortingOrder) onSelected;
   final bool showDistanceSort;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton(
-      icon: Icon(Icons.sort, color: Theme.of(context).canvasColor),
+      enabled: enabled,
+      icon:
+          Icon(Icons.sort, color: Theme.of(context).colorScheme.inverseSurface),
       itemBuilder: (BuildContext context) {
         return <PopupMenuItem<SortingOrder>>[
           const PopupMenuItem(
