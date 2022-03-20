@@ -30,7 +30,7 @@ void main() {
     test('weather uuid getter', () {
       var expectedUUID = 'this is the uuid';
       var a = Note.fromExisting('', '', WeatherType.clearSkyDay, MockDateTime(),
-          MockDateTime(), expectedUUID);
+          MockDateTime(), expectedUUID, null, false);
       expect(a.uuid, expectedUUID);
     });
 

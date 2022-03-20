@@ -17,7 +17,8 @@ class NotesSQLite {
       ${NoteFields.editTime} integer not null,
       ${NoteFields.createTime} integer not null,
       ${NoteFields.weatherType} text not null,
-      ${NoteFields.uuid} text not null)
+      ${NoteFields.uuid} text not null,
+      ${NoteFields.hasAttachment} int)
     ''');
     });
   }
@@ -34,12 +35,13 @@ class NotesSQLite {
       NoteFields.editTime,
       NoteFields.createTime,
       NoteFields.weatherType,
-      NoteFields.uuid
+      NoteFields.uuid,
+      NoteFields.hasAttachment
     ]);
 
     List<Note> notes = [];
     for (var map in queryMaps) {
-      notes.add(Note.fromRTDB(map[NoteFields.uuid], map));
+      notes.add(Note.fromDB(map[NoteFields.uuid], map));
     }
 
     return notes;

@@ -226,7 +226,9 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        drawer: const MyAppDrawer(),
+        drawer: MyAppDrawer(
+          title: widget.title,
+        ),
         appBar: MyAppBar(
           title: widget.title,
           tabController: _tabController,

@@ -37,7 +37,7 @@ class FavCitiesProvider extends ChangeNotifier {
     });
   }
 
-  late StreamSubscription<DatabaseEvent> _favStream;
+  StreamSubscription<DatabaseEvent>? _favStream;
 
   List<FavCity> get favourites => _favouriteCities;
 
@@ -50,7 +50,7 @@ class FavCitiesProvider extends ChangeNotifier {
       firebaseUser = userStream;
 
       if (userStream == null) {
-        _favStream.cancel();
+        _favStream?.cancel();
       } else {
         _favStream = _favRef(userStream.uid).onValue.listen((event) {
           _favouriteCities.clear();
@@ -148,7 +148,7 @@ class FavCitiesProvider extends ChangeNotifier {
 
   @override
   void dispose() {
-    _favStream.cancel();
+    _favStream?.cancel();
     super.dispose();
   }
 }

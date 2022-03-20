@@ -40,26 +40,32 @@ class _WeatherTabState extends State<WeatherTab> {
   final double iconSize = 40;
   static const String prefsKey = 'widgetOrder';
 
-  List<WeatherWidgets> widgetOrder = [
+  static List<WeatherWidgets> widgetOrder = [
     WeatherWidgets.weatherMap,
     WeatherWidgets.windCard,
     WeatherWidgets.airQualityCard,
     WeatherWidgets.pressureAndHumidity
   ];
 
+  // Stroke of genius
+  static bool fetchedWidgetOrder = false;
+
   @override
   initState() {
     super.initState();
-    SharedPreferences.getInstance().then((prefs) {
-      List<WeatherWidgets> savedOrder = widgetOrder;
-      List<String>? savedOrderStrings = prefs.getStringList(prefsKey);
-      if (savedOrderStrings != null) {
-        savedOrder = savedOrderStrings
-            .map((e) => WeatherWidgets.values.byName(e))
-            .toList();
-      }
-      widgetOrder = savedOrder;
-    });
+    if (!fetchedWidgetOrder) {
+      SharedPreferences.getInstance().then((prefs) {
+        List<WeatherWidgets> savedOrder = widgetOrder;
+        List<String>? savedOrderStrings = prefs.getStringList(prefsKey);
+        if (savedOrderStrings != null) {
+          savedOrder = savedOrderStrings
+              .map((e) => WeatherWidgets.values.byName(e))
+              .toList();
+        }
+        widgetOrder = savedOrder;
+        fetchedWidgetOrder = true;
+      });
+    }
   }
 
   LatLng _locationToLatLng(Location location) {

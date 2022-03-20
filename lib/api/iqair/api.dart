@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mr_blue_sky/api/iqair/city_weather.dart';
 import 'package:mr_blue_sky/api/iqair/exceptions.dart';
+import 'package:mr_blue_sky/api/iqair/secrets.dart';
 import 'package:mr_blue_sky/api/weather_api.dart';
 
 import '../city.dart';
@@ -17,7 +18,7 @@ class IQAir implements WeatherAPI {
 
   /// Returns the API key
   String _getKey() {
-    return "8cc58d2e-2ed5-4a93-ae15-fd7245e7357c";
+    return IQSecrets.key;
   }
 
   Uri _getAPIUrl(String endpoint, [Map<String, String>? params]) {

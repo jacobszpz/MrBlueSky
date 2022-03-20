@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mr_blue_sky/api/weather_type.dart';
@@ -12,6 +14,7 @@ class NoteFields {
   static const createTime = 'creationTimestamp';
   static const weatherType = 'weatherType';
   static const uuid = 'uuid';
+  static const hasAttachment = 'hasAttachment';
 }
 
 class Note {
@@ -21,12 +24,29 @@ class Note {
   DateTime editTimestamp = DateTime.now();
   DateTime creationTimestamp = DateTime.now();
   String uuid = const Uuid().v1();
+  bool hasCloudCopy = false;
+  Uint8List? attachment;
+  String? remoteAttachmentPath;
 
   Note.fromWeather(this.weather);
   Note.fromNew(this.title, this.content, this.weather);
   Note.fromExisting(this.title, this.content, this.weather, this.editTimestamp,
-      this.creationTimestamp, this.uuid);
+      this.creationTimestamp, this.uuid, this.attachment, this.hasCloudCopy);
   Note.empty();
+
+  Note.fromDB(String dbUUID, Map<String, dynamic> map) {
+    title = map[NoteFields.title];
+    content = map[NoteFields.content];
+    editTimestamp =
+        DateTime.fromMillisecondsSinceEpoch(map[NoteFields.editTime]);
+    creationTimestamp =
+        DateTime.fromMillisecondsSinceEpoch(map[NoteFields.createTime]);
+    weather = WeatherType.values.byName(map[NoteFields.weatherType]);
+    uuid = dbUUID;
+    if (map.containsKey(NoteFields.hasAttachment)) {
+      hasCloudCopy = (map[NoteFields.hasAttachment] == 1);
+    }
+  }
 
   Note.fromRTDB(String dbUUID, Map<String, dynamic> map) {
     title = map[NoteFields.title];
@@ -37,6 +57,9 @@ class Note {
         DateTime.fromMillisecondsSinceEpoch(map[NoteFields.createTime]);
     weather = WeatherType.values.byName(map[NoteFields.weatherType]);
     uuid = dbUUID;
+    if (map.containsKey(NoteFields.hasAttachment)) {
+      hasCloudCopy = map[NoteFields.hasAttachment];
+    }
   }
 
   Map<String, dynamic> toMap() {
@@ -45,7 +68,8 @@ class Note {
       NoteFields.content: content,
       NoteFields.editTime: editTimestamp.millisecondsSinceEpoch,
       NoteFields.createTime: creationTimestamp.millisecondsSinceEpoch,
-      NoteFields.weatherType: weather.name
+      NoteFields.weatherType: weather.name,
+      NoteFields.hasAttachment: ((attachment != null) || hasCloudCopy)
     };
   }
 
@@ -56,7 +80,8 @@ class Note {
       NoteFields.editTime: editTimestamp.millisecondsSinceEpoch,
       NoteFields.createTime: creationTimestamp.millisecondsSinceEpoch,
       NoteFields.weatherType: weather.name,
-      NoteFields.uuid: uuid
+      NoteFields.uuid: uuid,
+      NoteFields.hasAttachment: (attachment != null) ? 1 : 0
     };
   }
 

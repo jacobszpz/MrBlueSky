@@ -4,6 +4,7 @@ import 'dart:core';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:mr_blue_sky/db/notes.dart';
 import 'package:mr_blue_sky/firebase/values.dart';
@@ -20,7 +21,11 @@ class NotesProvider extends ChangeNotifier {
       FirebaseDatabase.instanceFor(app: Firebase.app(), databaseURL: dbURL)
           .ref();
 
+  final _storage = FirebaseStorage.instance;
+
   static const notesPath = 'notes';
+  static const usersBucketPath = 'users';
+  static const attachmentsPath = 'attachments';
 
   NotesProvider() {
     openDB = _sqlDB.open();
@@ -35,7 +40,7 @@ class NotesProvider extends ChangeNotifier {
     });
   }
 
-  late StreamSubscription<DatabaseEvent> _notesStream;
+  StreamSubscription<DatabaseEvent>? _notesStream;
 
   List<Note> get notes => _notes;
 
@@ -43,12 +48,16 @@ class NotesProvider extends ChangeNotifier {
     return _db.child(sharedPrefsPath).child(userUID).child(notesPath);
   }
 
+  Reference _userFolderRef(String userUID) {
+    return _storage.ref(usersBucketPath).child(userUID).child(attachmentsPath);
+  }
+
   Future _listenToNotes() async {
     FirebaseAuth.instance.authStateChanges().listen((userStream) {
       firebaseUser = userStream;
 
       if (userStream == null) {
-        _notesStream.cancel();
+        _notesStream?.cancel();
       } else {
         _notesStream = _notesRef(userStream.uid).onValue.listen((event) {
           _notes.clear();
@@ -130,6 +139,7 @@ class NotesProvider extends ChangeNotifier {
       final user = firebaseUser;
       if (user != null) {
         _notesRef(user.uid).child(note.uuid).set(note.toMap());
+        _uploadAttachment(user.uid, note);
       } else {
         _sqlDB.insertNote(note);
       }
@@ -138,9 +148,22 @@ class NotesProvider extends ChangeNotifier {
     }
   }
 
+  Future _uploadAttachment(String userUID, Note note) async {
+    final attachment = note.attachment;
+    if (attachment != null) {
+      try {
+        await _userFolderRef(userUID)
+            .child('${note.uuid}.jpg')
+            .putData(attachment);
+      } on FirebaseException catch (e) {
+        // Oops
+      }
+    }
+  }
+
   @override
   void dispose() {
-    _notesStream.cancel();
+    _notesStream?.cancel();
     super.dispose();
   }
 }

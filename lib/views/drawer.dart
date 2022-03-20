@@ -2,11 +2,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterfire_ui/auth.dart';
 
+import 'about.dart';
+
 class MyAppDrawer extends StatefulWidget {
-  const MyAppDrawer({Key? key, this.onSignIn, this.onSignOut})
+  const MyAppDrawer({Key? key, this.onSignIn, this.onSignOut, this.title = ''})
       : super(key: key);
   final Function(BuildContext)? onSignOut;
   final Function(BuildContext, SignedIn)? onSignIn;
+  final String title;
 
   @override
   State<MyAppDrawer> createState() => _MyAppDrawerState();
@@ -63,6 +66,15 @@ class _MyAppDrawerState extends State<MyAppDrawer> {
               : DrawerHeader(
                   decoration: _drawerDecoration(),
                   child: const SizedBox.shrink()),
+          ListTile(
+              title: Text('About', style: _drawerTileTextStyle()),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => About(title: widget.title)));
+              }),
           /*ListTile(
             title: Text(
               'Settings',
